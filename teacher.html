@@ -149,8 +149,11 @@ async function connect() {
 }
 
 function emitAck(event, payload = {}) {
+  // A cold-starting server can swallow an emit mid-handshake; without this
+  // timeout the button would stay disabled forever with no error.
   return new Promise((resolve) =>
-    socket.emit(event, { code: session?.code, pin: session?.pin, ...payload }, resolve));
+    socket.timeout(10000).emit(event, { code: session?.code, pin: session?.pin, ...payload },
+      (err, reply) => resolve(err ? { error: "The server took too long to answer. Please try again." } : reply)));
 }
 
 /* ---------- helpers ---------- */
