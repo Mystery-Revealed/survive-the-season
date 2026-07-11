@@ -1,0 +1,69 @@
+rules_version = '2';
+
+// ============================================================
+// SURVIVE THE SEASON — Firestore security rules
+// Paste into: Firebase console → Firestore Database → Rules
+//
+// Design:
+//  - Everyone signs in with Anonymous Auth (uid = their identity).
+//  - The teacher's browser uid is stored on the session as teacherUid.
+//  - Students can only create/update THEIR OWN record (doc id = uid)
+//    inside an OPEN session, and can never approve themselves or
+//    change their own name after joining.
+//  - Only the teacher (teacherUid) can list the roster, approve,
+//    rename, remove students, or delete the session.
+// ============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /sessions/{sessionId} {
+
+      function isSignedIn() { return request.auth != null; }
+      function sess() { return get(/databases/$(database)/documents/sessions/$(sessionId)).data; }
+      function isTeacher() { return isSignedIn() && request.auth.uid == sess().teacherUid; }
+
+      // Anyone signed in may look up a session by code (needed to join).
+      // Only the pinHash (not the PIN) is ever stored.
+      allow get, list: if isSignedIn();
+
+      // Creating a session stamps the creator as its teacher.
+      allow create: if isSignedIn()
+        && request.resource.data.teacherUid == request.auth.uid
+        && request.resource.data.open == true
+        && request.resource.data.expiresAt is timestamp;
+
+      // Only the teacher can change or delete the session.
+      allow update, delete: if isSignedIn() && resource.data.teacherUid == request.auth.uid;
+
+      match /students/{studentId} {
+
+        // A student may read only their own record (to watch for
+        // approval). The teacher may read and list everyone.
+        allow get: if isSignedIn() && (request.auth.uid == studentId || isTeacher());
+        allow list: if isTeacher();
+
+        // A student may create only their own record, in an open
+        // session, and may not arrive pre-approved when approval
+        // is required.
+        allow create: if isSignedIn()
+          && request.auth.uid == studentId
+          && sess().open == true
+          && (sess().requireApproval == false || request.resource.data.approved == false);
+
+        // A student may update their own progress, but may not
+        // flip their own "approved" flag or change their name.
+        // The teacher may update anything (approve, rename).
+        allow update: if isTeacher()
+          || (isSignedIn()
+              && request.auth.uid == studentId
+              && sess().open == true
+              && request.resource.data.approved == resource.data.approved
+              && request.resource.data.displayName == resource.data.displayName);
+
+        // Only the teacher removes students.
+        allow delete: if isTeacher();
+      }
+    }
+  }
+}

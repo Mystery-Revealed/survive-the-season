@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Survive the Season — Texas History Game</title>
+<style>
+  :root {
+    --parchment: #f7f0e1;
+    --card: #fffaf0;
+    --ink: #3a2c1e;
+    --ink-soft: #6b5a45;
+    --accent: #8c5a2b;
+    --accent-dark: #5f3c1a;
+    --right: #2e7d32;
+    --partial: #b07d10;
+    --wrong: #b3402e;
+    --food: #c0392b;
+    --shelter: #8c5a2b;
+    --health: #2e7d5a;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--parchment); }
+  body {
+    font-family: Georgia, "Times New Roman", serif;
+    color: var(--ink);
+    font-size: 17px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  #app {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 14px 14px 30px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  h1, h2, h3 {
+    font-family: Georgia, serif;
+    color: var(--accent-dark);
+    line-height: 1.2;
+  }
+  h1 { font-size: 2.2rem; }
+  h2 { font-size: 1.6rem; }
+  h2:focus, h1:focus { outline: none; }
+  .screen { animation: fadein .35s ease; flex: 1; display: flex; flex-direction: column; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .btn {
+    display: block;
+    width: 100%;
+    font-family: inherit;
+    font-size: 1.05rem;
+    text-align: left;
+    background: var(--card);
+    color: var(--ink);
+    border: 2px solid #d8c9ab;
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin: 10px 0;
+    cursor: pointer;
+    transition: border-color .15s, transform .1s, box-shadow .15s;
+  }
+  .btn:hover, .btn:focus-visible { border-color: var(--accent); box-shadow: 0 2px 10px rgba(90,60,20,.15); }
+  .btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .btn:active { transform: scale(.99); }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    text-align: center;
+    font-weight: bold;
+    border-color: var(--accent-dark);
+    font-size: 1.15rem;
+  }
+  .btn-primary:hover, .btn-primary:focus-visible { background: var(--accent-dark); }
+  .btn-quiet { background: none; border: none; color: var(--ink-soft); text-decoration: underline; text-align: center; font-size: .95rem; cursor: pointer; font-family: inherit; }
+
+  .scene {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: linear-gradient(135deg, #d9c9a6, #b09a72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7a6647;
+    font-style: italic;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .scene img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .meters { display: flex; gap: 10px; margin: 14px 0; }
+  .meter { flex: 1; background: var(--card); border: 1.5px solid #d8c9ab; border-radius: 10px; padding: 8px 10px; }
+  .meter-label { font-size: .85rem; font-weight: bold; color: var(--ink-soft); display: flex; justify-content: space-between; }
+  .meter-bar { height: 12px; background: #e7dcc4; border-radius: 6px; margin-top: 5px; overflow: hidden; }
+  .meter-fill { height: 100%; border-radius: 6px; transition: width .6s ease; }
+  .meter-food .meter-fill { background: var(--food); }
+  .meter-shelter .meter-fill { background: var(--shelter); }
+  .meter-health .meter-fill { background: var(--health); }
+
+  .card {
+    background: var(--card);
+    border: 1.5px solid #d8c9ab;
+    border-radius: var(--radius);
+    padding: 20px;
+    margin: 12px 0;
+  }
+  .verdict { display: inline-block; font-weight: bold; padding: 4px 14px; border-radius: 20px; color: #fff; margin-bottom: 10px; font-size: 1rem; }
+  .verdict.right { background: var(--right); }
+  .verdict.partial { background: var(--partial); }
+  .verdict.wrong { background: var(--wrong); }
+  .delta { font-weight: bold; }
+  .delta.up { color: var(--right); }
+  .delta.down { color: var(--wrong); }
+
+  .people-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-top: 14px; }
+  .people-card {
+    background: var(--card); border: 2px solid #d8c9ab; border-radius: var(--radius);
+    cursor: pointer; padding: 0; overflow: hidden; text-align: left; font-family: inherit;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .people-card:hover, .people-card:focus-visible { border-color: var(--accent); box-shadow: 0 3px 12px rgba(90,60,20,.2); }
+  .people-card:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .people-card .scene { aspect-ratio: 16/10; border-radius: 0; margin: 0; }
+  .people-card .pc-body { padding: 12px 14px 14px; }
+  .people-card h3 { font-size: 1.25rem; }
+  .people-card p { font-size: .9rem; color: var(--ink-soft); margin-top: 4px; }
+
+  .season-tag { display: inline-block; background: var(--accent); color: #fff; font-size: .85rem; font-weight: bold; letter-spacing: .08em; text-transform: uppercase; padding: 4px 14px; border-radius: 20px; margin-bottom: 8px; }
+  .progress-dots { display: flex; gap: 6px; margin: 6px 0 2px; }
+  .progress-dots span { width: 34px; height: 8px; border-radius: 4px; background: #ddceac; }
+  .progress-dots span.done { background: var(--accent); }
+  .progress-dots span.now { background: var(--accent-dark); }
+
+  input[type=text] {
+    width: 100%; font-family: inherit; font-size: 1.1rem; padding: 12px 14px;
+    border: 2px solid #d8c9ab; border-radius: 10px; background: #fff; color: var(--ink); margin: 6px 0 14px;
+  }
+  input[type=text]:focus { outline: 3px solid var(--accent); border-color: var(--accent); }
+  label { font-weight: bold; color: var(--ink-soft); font-size: .95rem; }
+  .err { color: var(--wrong); font-weight: bold; margin: 8px 0; min-height: 1.4em; }
+
+  .ending-title { font-size: 2rem; margin-bottom: 8px; }
+  .debrief li { margin: 8px 0 8px 4px; }
+  .debrief { padding-left: 20px; }
+
+  footer { text-align: center; color: var(--ink-soft); font-size: .8rem; margin-top: 26px; }
+  .center { text-align: center; }
+  .mt { margin-top: 16px; }
+  .lead { font-size: 1.1rem; margin: 10px 0; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  .spinner { width: 40px; height: 40px; border: 4px solid #ddceac; border-top-color: var(--accent); border-radius: 50%; margin: 20px auto; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 480px) {
+    body { font-size: 16px; }
+    h1 { font-size: 1.7rem; }
+    h2 { font-size: 1.35rem; }
+    .meters { flex-direction: row; gap: 6px; }
+    .meter { padding: 6px; }
+    .meter-label { font-size: .72rem; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="live-region" class="visually-hidden" role="status" aria-live="polite"></div>
+
+<script src="game-data.js"></script>
+<script src="firebase-config.js"></script>
+<script type="module">
+/* ============================================================
+   SURVIVE THE SEASON — game logic
+   Content lives in game-data.js. This file never holds text
+   students read, except tiny UI labels.
+   No localStorage/sessionStorage: all game state is in memory.
+   ============================================================ */
+
+const app = document.getElementById("app");
+const live = document.getElementById("live-region");
+
+const METER_INFO = [
+  { key: "food",    label: "Food",    emoji: "\u{1F356}" },
+  { key: "shelter", label: "Shelter", emoji: "⛺" },
+  { key: "health",  label: "Health",  emoji: "❤️" }
+];
+const SEASON_EMOJI = { spring: "\u{1F331}", summer: "☀️", fall: "\u{1F342}", winter: "❄️" };
+const VERDICT_LABEL = { right: "✅ Good choice!", partial: "⚠️ Partly right", wrong: "❌ Not your people's way" };
+const VERDICT_POINTS = { right: 1, partial: 0.5, wrong: 0 };
+
+/* ---------- state (memory only) ---------- */
+let state = null;
+function freshState(people) {
+  return {
+    people,
+    seasonIndex: 0,
+    decisionIndex: 0,
+    meters: { food: GAME_DATA.meterStart, shelter: GAME_DATA.meterStart, health: GAME_DATA.meterStart },
+    decisions: [],
+    points: 0,
+    failedMeter: null
+  };
+}
+
+/* ---------- Firebase (classroom mode) ---------- */
+const classroomEnabled = FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey;
+let fb = null;          // { db, uid, sessionId, fns... } once joined
+let studentName = "";
+
+async function fbInit() {
+  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+  const { getAuth, signInAnonymously } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
+  const fs = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+  const appFb = initializeApp(FIREBASE_CONFIG);
+  const auth = getAuth(appFb);
+  const cred = await signInAnonymously(auth);
+  return { db: fs.getFirestore(appFb), fs, uid: cred.user.uid };
+}
+
+async function fbJoin(code, name) {
+  if (!fb) fb = await fbInit();
+  const { fs, db, uid } = fb;
+  const q = fs.query(
+    fs.collection(db, "sessions"),
+    fs.where("code", "==", code),
+    fs.where("open", "==", true),
+    fs.limit(1)
+  );
+  const snap = await fs.getDocs(q);
+  if (snap.empty) throw new Error("no-session");
+  const sessionDoc = snap.docs[0];
+  fb.sessionId = sessionDoc.id;
+  fb.requireApproval = !!sessionDoc.data().requireApproval;
+  const ref = fs.doc(db, "sessions", fb.sessionId, "students", uid);
+  await fs.setDoc(ref, {
+    displayName: name,
+    approved: !fb.requireApproval,
+    tribe: null,
+    status: "not_started",
+    decisions: [],
+    pointsEarned: 0,
+    totalDecisions: GAME_DATA.totalDecisions,
+    accuracy: null,
+    startedAt: null,
+    completedAt: null,
+    joinedAt: fs.serverTimestamp()
+  });
+  fb.studentRef = ref;
+}
+
+function fbWatchApproval(onApproved, onRemoved) {
+  const { fs } = fb;
+  fb.unsubApproval = fs.onSnapshot(fb.studentRef, (snap) => {
+    if (!snap.exists()) { onRemoved(); return; }
+    if (snap.data().approved) {
+      if (fb.unsubApproval) { fb.unsubApproval(); fb.unsubApproval = null; }
+      onApproved();
+    }
+  });
+}
+
+async function fbReport(fields) {
+  if (!fb || !fb.studentRef) return;
+  try { await fb.fs.updateDoc(fb.studentRef, fields); }
+  catch (e) { console.warn("Save failed (game continues):", e); }
+}
+
+/* ---------- tiny helpers ---------- */
+function el(html) {
+  const t = document.createElement("template");
+  t.innerHTML = html.trim();
+  return t.content.firstElementChild;
+}
+function show(node, focusSel) {
+  app.replaceChildren(node);
+  const f = focusSel ? node.querySelector(focusSel) : node.querySelector("h1, h2");
+  if (f) { f.setAttribute("tabindex", "-1"); f.focus({ preventScroll: false }); }
+  window.scrollTo(0, 0);
+}
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+function sceneHTML(src, alt) {
+  if (!src) return `<div class="scene">Scene image coming soon</div>`;
+  return `<div class="scene"><img src="${esc(src)}" alt="${esc(alt || "")}"
+      onerror="this.parentElement.textContent='Scene image coming soon'"></div>`;
+}
+function metersHTML(m) {
+  return `<div class="meters" role="group" aria-label="Your resource meters">` +
+    METER_INFO.map(mi => `
+      <div class="meter meter-${mi.key}">
+        <div class="meter-label"><span>${mi.emoji} ${mi.label}</span><span>${m[mi.key]}</span></div>
+        <div class="meter-bar" role="img" aria-label="${mi.label}: ${m[mi.key]} out of 100">
+          <div class="meter-fill" style="width:${m[mi.key]}%"></div>
+        </div>
+      </div>`).join("") + `</div>`;
+}
+function dotsHTML(seasonIndex) {
+  return `<div class="progress-dots" aria-label="Season ${seasonIndex + 1} of 4">` +
+    [0,1,2,3].map(i => `<span class="${i < seasonIndex ? "done" : i === seasonIndex ? "now" : ""}"></span>`).join("") + `</div>`;
+}
+function footerHTML() {
+  return `<footer>Made for 7th Grade Texas History &middot; TEKS 7.2A, 7.9A</footer>`;
+}
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+const BAD_WORDS = ["fuck","shit","bitch","cunt","dick","cock","pussy","nigg","fag","whore","slut","penis","vagina","boob","sex "];
+function nameLooksOk(n) {
+  const low = " " + n.toLowerCase() + " ";
+  return !BAD_WORDS.some(w => low.includes(w));
+}
+
+/* ============================================================
+   SCREENS
+   ============================================================ */
+
+/* ---------- Join (classroom mode) ---------- */
+function screenJoin(err = "") {
+  const node = el(`<div class="screen">
+    ${sceneHTML("assets/images/title_hero.jpg", "Early Texas at dawn: tall prairie grass, distant hills, golden light.")}
+    <h1>Survive the Season</h1>
+    <p class="lead">Join your class to play.</p>
+    <div class="card">
+      <label for="join-code">Class code (from your teacher)</label>
+      <input type="text" id="join-code" autocomplete="off" autocapitalize="characters" maxlength="10" placeholder="TX-????">
+      <label for="join-name">Pick the name your teacher will see</label>
+      <input type="text" id="join-name" autocomplete="off" maxlength="24" placeholder="First name + last initial">
+      <p class="err" role="alert">${esc(err)}</p>
+      <button class="btn btn-primary" id="join-btn">Join Class</button>
+      <button class="btn-quiet" id="solo-btn" style="width:100%;margin-top:8px;">Practice without a class code</button>
+    </div>
+    ${footerHTML()}
+  </div>`);
+  node.querySelector("#join-btn").addEventListener("click", async () => {
+    const code = node.querySelector("#join-code").value.trim().toUpperCase();
+    const name = node.querySelector("#join-name").value.trim();
+    if (!code) return showErr("Please type your class code.");
+    if (name.length < 2) return showErr("Please pick a name (at least 2 letters).");
+    if (!nameLooksOk(name)) return showErr("Please pick a different name.");
+    const btn = node.querySelector("#join-btn");
+    btn.disabled = true; btn.textContent = "Joining…";
+    try {
+      await fbJoin(code, name);
+      studentName = name;
+      if (fb.requireApproval) screenWaiting();
+      else screenTitle();
+    } catch (e) {
+      btn.disabled = false; btn.textContent = "Join Class";
+      showErr(e.message === "no-session"
+        ? "That code didn't match an open class. Check it and try again."
+        : "Couldn't connect. Check your internet and try again.");
+    }
+  });
+  node.querySelector("#solo-btn").addEventListener("click", () => { fb = null; screenTitle(); });
+  function showErr(msg) { node.querySelector(".err").textContent = msg; }
+  show(node);
+}
+
+function screenWaiting() {
+  const node = el(`<div class="screen center">
+    <h2 class="mt">Hi, ${esc(studentName)}!</h2>
+    <div class="spinner" aria-hidden="true"></div>
+    <p class="lead">Waiting for your teacher to approve your name&hellip;</p>
+    <p style="color:var(--ink-soft)">The game will start by itself when your teacher says OK.</p>
+    ${footerHTML()}
+  </div>`);
+  show(node);
+  fbWatchApproval(
+    () => screenTitle(),
+    () => screenJoin("Your teacher removed that name. Please pick another one.")
+  );
+}
+
+/* ---------- Title / How to play ---------- */
+function screenTitle() {
+  const node = el(`<div class="screen">
+    ${sceneHTML("assets/images/title_hero.jpg", "Early Texas at dawn: tall prairie grass, distant hills, golden light.")}
+    <h1>Survive the Season</h1>
+    <p class="lead">Texas, long ago &mdash; before Europeans arrived. Four peoples live in four very different lands. Can you live a whole year the way they really did?</p>
+    <button class="btn btn-primary mt" id="start">Start</button>
+    ${footerHTML()}
+  </div>`);
+  node.querySelector("#start").addEventListener("click", screenHowTo);
+  show(node);
+}
+
+function screenHowTo() {
+  const node = el(`<div class="screen">
+    <h2>How to Play</h2>
+    <div class="card">
+      <p><strong>1.</strong> Pick one of the four early Texas peoples.</p>
+      <p class="mt"><strong>2.</strong> Live through four seasons: Spring, Summer, Fall, and Winter. Each season brings two big choices.</p>
+      <p class="mt"><strong>3.</strong> Watch your three meters: ${METER_INFO.map(m => `${m.emoji} <strong>${m.label}</strong>`).join(" &middot; ")}. They start at 60. If any meter hits 0, the year ends early.</p>
+      <p class="mt"><strong>4.</strong> Here's the secret: the <em>right</em> choice depends on <em>your people's land</em>. What saves one people can sink another!</p>
+    </div>
+    <button class="btn btn-primary" id="go">Choose Your People</button>
+    ${footerHTML()}
+  </div>`);
+  node.querySelector("#go").addEventListener("click", screenChoosePeople);
+  show(node);
+}
+
+/* ---------- Choose people ---------- */
+function screenChoosePeople() {
+  const cards = GAME_DATA.peoples.map(p => `
+    <button class="people-card" data-id="${p.id}">
+      ${sceneHTML(p.cardImage, `${p.name} people in their home region: ${p.region}.`)}
+      <div class="pc-body">
+        <h3>${esc(p.name)}</h3>
+        <p><strong>Region:</strong> ${esc(p.region)}<br>
+           <strong>Home:</strong> ${esc(p.home)}<br>
+           <strong>Main food:</strong> ${esc(p.food)}</p>
+      </div>
+    </button>`).join("");
+  const node = el(`<div class="screen">
+    <h2>Choose Your People</h2>
+    <p>Each people lived in a different part of Texas. Their land shaped everything they did.</p>
+    <div class="people-grid">${cards}</div>
+    ${footerHTML()}
+  </div>`);
+  node.querySelectorAll(".people-card").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const p = GAME_DATA.peoples.find(x => x.id === btn.dataset.id);
+      state = freshState(p);
+      fbReport({ tribe: p.id, status: "in_progress", startedAt: fb ? fb.fs.serverTimestamp() : null });
+      screenPeopleIntro();
+    });
+  });
+  show(node);
+}
+
+function screenPeopleIntro() {
+  const p = state.people;
+  const node = el(`<div class="screen">
+    ${sceneHTML(p.cardImage, `${p.name} people in their home region: ${p.region}.`)}
+    <h2>The ${esc(p.name)}</h2>
+    <div class="card"><p class="lead">${esc(p.intro)}</p></div>
+    ${metersHTML(state.meters)}
+    <button class="btn btn-primary" id="go">Begin the Year</button>
+    ${footerHTML()}
+  </div>`);
+  node.querySelector("#go").addEventListener("click", screenSeasonIntro);
+  show(node);
+}
+
+/* ---------- Season loop ---------- */
+function currentSeason() { return state.people.seasons[state.seasonIndex]; }
+
+function screenSeasonIntro() {
+  const s = currentSeason();
+  const node = el(`<div class="screen">
+    ${dotsHTML(state.seasonIndex)}
+    <span class="season-tag">${SEASON_EMOJI[s.key]} ${esc(s.key)}</span>
+    <h2>${esc(s.title)}</h2>
+    ${sceneHTML(s.image, s.alt)}
+    <div class="card"><p class="lead">${esc(s.intro)}</p></div>
+    ${metersHTML(state.meters)}
+    <button class="btn btn-primary" id="go">Continue</button>
+    ${footerHTML()}
+  </div>`);
+  node.querySelector("#go").addEventListener("click", screenDecision);
+  show(node);
+}
+
+function screenDecision() {
+  const s = currentSeason();
+  const d = s.decisions[state.decisionIndex];
+  const options = shuffle(d.choices.map((c, i) => ({ c, i })));
+  const node = el(`<div class="screen">
+    ${dotsHTML(state.seasonIndex)}
+    <span class="season-tag">${SEASON_EMOJI[s.key]} ${esc(s.key)} &middot; Choice ${state.decisionIndex + 1} of 2</span>
+    <h2>${esc(d.prompt)}</h2>
+    ${metersHTML(state.meters)}
+    <div id="choices"></div>
+    ${footerHTML()}
+  </div>`);
+  const box = node.querySelector("#choices");
+  options.forEach(({ c }) => {
+    const b = el(`<button class="btn">${esc(c.text)}</button>`);
+    b.addEventListener("click", () => applyChoice(c));
+    box.appendChild(b);
+  });
+  show(node);
+}
+
+function applyChoice(choice) {
+  const before = { ...state.meters };
+  for (const [k, v] of Object.entries(choice.effects)) {
+    state.meters[k] = Math.max(0, Math.min(100, state.meters[k] + v));
+  }
+  const pts = VERDICT_POINTS[choice.verdict];
+  state.points += pts;
+  const s = currentSeason();
+  state.decisions.push({ season: s.key, n: state.decisionIndex + 1, verdict: choice.verdict, points: pts });
+  fbReport({ decisions: state.decisions, pointsEarned: state.points });
+
+  const failed = METER_INFO.find(mi => state.meters[mi.key] <= 0);
+  if (failed) state.failedMeter = failed.key;
+
+  const deltas = METER_INFO
+    .filter(mi => state.meters[mi.key] !== before[mi.key] || choice.effects[mi.key])
+    .map(mi => {
+      const diff = state.meters[mi.key] - before[mi.key];
+      const cls = diff >= 0 ? "up" : "down";
+      const sign = diff > 0 ? "+" : "";
+      return `<span class="delta ${cls}">${mi.emoji} ${mi.label} ${sign}${diff}</span>`;
+    }).join(" &nbsp; ");
+  live.textContent = METER_INFO.map(mi => `${mi.label} is now ${state.meters[mi.key]}`).join(", ");
+  screenFeedback(choice, deltas);
+}
+
+function screenFeedback(choice, deltas) {
+  const nextLabel = state.failedMeter ? "See what happened"
+    : state.decisionIndex === 0 ? "Next choice" : "Finish the season";
+  const node = el(`<div class="screen">
+    <div class="card">
+      <span class="verdict ${choice.verdict}">${VERDICT_LABEL[choice.verdict]}</span>
+      <p style="margin:6px 0 10px">${deltas || "No meter change."}</p>
+      <p class="lead">${esc(choice.feedback)}</p>
+    </div>
+    ${metersHTML(state.meters)}
+    <button class="btn btn-primary" id="go">${nextLabel}</button>
+    ${footerHTML()}
+  </div>`);
+  node.querySelector("#go").addEventListener("click", () => {
+    if (state.failedMeter) return screenEnding("failed");
+    if (state.decisionIndex === 0) { state.decisionIndex = 1; screenDecision(); }
+    else screenSeasonSummary();
+  });
+  show(node, ".verdict");
+}
+
+function screenSeasonSummary() {
+  const s = currentSeason();
+  const vals = METER_INFO.map(mi => state.meters[mi.key]);
+  const lowest = Math.min(...vals);
+  const line = lowest >= 70 ? "Your people are doing very well. The land is providing."
+    : lowest >= 45 ? "You're holding on. Keep choosing your people's way."
+    : "It's getting hard. Your next choices really matter.";
+  const isWinter = state.seasonIndex === 3;
+  const node = el(`<div class="screen">
+    ${dotsHTML(state.seasonIndex)}
+    <span class="season-tag">${SEASON_EMOJI[s.key]} ${esc(s.key)} complete</span>
+    <h2>End of ${esc(s.key.charAt(0).toUpperCase() + s.key.slice(1))}</h2>
+    ${metersHTML(state.meters)}
+    <div class="card"><p class="lead">${line}</p></div>
+    <button class="btn btn-primary" id="go">${isWinter ? "See how your year ends" : "On to " + nextSeasonName()}</button>
+    ${footerHTML()}
+  </div>`);
+  node.querySelector("#go").addEventListener("click", () => {
+    if (isWinter) {
+      const allHigh = METER_INFO.every(mi => state.meters[mi.key] >= 60);
+      screenEnding(allHigh ? "thrived" : "survived");
+    } else {
+      state.seasonIndex += 1;
+      state.decisionIndex = 0;
+      screenSeasonIntro();
+    }
+  });
+  show(node);
+}
+function nextSeasonName() {
+  const k = state.people.seasons[state.seasonIndex + 1].key;
+  return k.charAt(0).toUpperCase() + k.slice(1);
+}
+
+/* ---------- Endings ---------- */
+function screenEnding(kind) {
+  const p = state.people;
+  const accuracy = Math.round((state.points / GAME_DATA.totalDecisions) * 100);
+  fbReport({
+    status: "completed",
+    accuracy,
+    pointsEarned: state.points,
+    decisions: state.decisions,
+    completedAt: fb ? fb.fs.serverTimestamp() : null
+  });
+
+  let title, text, emoji;
+  if (kind === "thrived") { title = GAME_DATA.endings.thrived.title; text = GAME_DATA.endings.thrived.text; emoji = "\u{1F31F}"; }
+  else if (kind === "survived") { title = GAME_DATA.endings.survived.title; text = GAME_DATA.endings.survived.text; emoji = "\u{1F332}"; }
+  else {
+    const mi = METER_INFO.find(m => m.key === state.failedMeter);
+    title = "The Year Was Too Hard";
+    text = `Your ${mi.label.toLowerCase()} ${mi.emoji} ran out. ` + GAME_DATA.endings.failed[state.failedMeter];
+    emoji = "\u{1F327}️";
+  }
+  const debrief = p.debrief.map(li => `<li>${esc(li)}</li>`).join("");
+  const node = el(`<div class="screen">
+    <p class="center" style="font-size:3rem" aria-hidden="true">${emoji}</p>
+    <h2 class="ending-title center">${esc(title)}</h2>
+    <div class="card"><p class="lead">${esc(text)}</p>
+      <p class="mt"><strong>Your choices matched the ${esc(p.name)} way of life ${accuracy}% of the time.</strong></p>
+    </div>
+    ${metersHTML(state.meters)}
+    <div class="card">
+      <h3>How the ${esc(p.name)} really survived the seasons</h3>
+      <ul class="debrief mt">${debrief}</ul>
+    </div>
+    <div class="card center" style="border-color:var(--accent)">
+      <p class="lead"><strong>${esc(GAME_DATA.endings.replayNudge)}</strong></p>
+      <button class="btn btn-primary" id="replay">Play Again &mdash; Choose Another People</button>
+    </div>
+    ${footerHTML()}
+  </div>`);
+  node.querySelector("#replay").addEventListener("click", () => {
+    state = null;
+    screenChoosePeople();
+  });
+  show(node);
+}
+
+/* ---------- boot ---------- */
+if (classroomEnabled) screenJoin();
+else screenTitle();
+</script>
+</body>
+</html>

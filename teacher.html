@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher Command Center — Survive the Season</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root {
+    --bg: #f3f1ec;
+    --card: #ffffff;
+    --ink: #2b2620;
+    --ink-soft: #6b6154;
+    --accent: #8c5a2b;
+    --accent-dark: #5f3c1a;
+    --green: #2e7d32;
+    --amber: #b07d10;
+    --red: #b3402e;
+    --gray: #8a8a8a;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: var(--bg); color: var(--ink);
+    font-size: 16px; line-height: 1.5;
+  }
+  #app { max-width: 1000px; margin: 0 auto; padding: 18px 16px 40px; }
+  h1 { color: var(--accent-dark); font-size: 1.7rem; }
+  h2 { color: var(--accent-dark); font-size: 1.25rem; margin-bottom: 8px; }
+  h1:focus, h2:focus { outline: none; }
+  .card { background: var(--card); border: 1px solid #ded5c5; border-radius: var(--radius); padding: 20px; margin: 14px 0; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+  .btn {
+    font-family: inherit; font-size: 1rem; font-weight: 600;
+    background: var(--accent); color: #fff; border: none; border-radius: 8px;
+    padding: 10px 18px; cursor: pointer; margin: 4px 4px 4px 0;
+  }
+  .btn:hover, .btn:focus-visible { background: var(--accent-dark); }
+  .btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .btn.secondary { background: #eee5d4; color: var(--accent-dark); }
+  .btn.danger { background: var(--red); }
+  .btn.small { font-size: .82rem; padding: 5px 10px; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  input[type=text], input[type=password] {
+    font-family: inherit; font-size: 1.05rem; padding: 10px 12px; width: 100%;
+    border: 1.5px solid #cfc4ae; border-radius: 8px; margin: 4px 0 14px;
+  }
+  input:focus { outline: 3px solid var(--accent); border-color: var(--accent); }
+  label { font-weight: 600; color: var(--ink-soft); font-size: .92rem; }
+  .err { color: var(--red); font-weight: 600; min-height: 1.4em; margin: 6px 0; }
+  .code-display {
+    font-family: Consolas, monospace; font-size: 2.4rem; font-weight: bold;
+    letter-spacing: .12em; color: var(--accent-dark); background: #f7f0e1;
+    border: 2px dashed var(--accent); border-radius: var(--radius);
+    padding: 12px 20px; display: inline-block;
+  }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #eee3cf; font-size: .95rem; }
+  th { color: var(--ink-soft); font-size: .82rem; text-transform: uppercase; letter-spacing: .05em; }
+  .badge { display: inline-block; font-size: .78rem; font-weight: 700; padding: 3px 10px; border-radius: 12px; color: #fff; white-space: nowrap; }
+  .badge.not_started { background: var(--gray); }
+  .badge.in_progress { background: var(--amber); }
+  .badge.completed { background: var(--green); }
+  .badge.pending { background: var(--red); }
+  .tribes { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  .tribe-card { border: 1px solid #ded5c5; border-radius: var(--radius); padding: 14px; background: #fcf9f2; }
+  .tribe-card b { font-size: 1.05rem; color: var(--accent-dark); }
+  .tribe-card .big { font-size: 1.7rem; font-weight: 800; color: var(--ink); }
+  .note { background: #fff7e0; border: 1px solid #e8d49a; border-radius: 8px; padding: 10px 14px; font-size: .92rem; margin: 10px 0; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+  .muted { color: var(--ink-soft); font-size: .9rem; }
+  dialog {
+    border: none; border-radius: var(--radius); padding: 26px; max-width: 420px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.3);
+  }
+  dialog::backdrop { background: rgba(0,0,0,.45); }
+  .switch { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-weight: 600; color: var(--ink-soft); cursor: pointer; }
+  .switch input { width: 20px; height: 20px; accent-color: var(--accent); }
+  .table-wrap { overflow-x: auto; }
+  footer { text-align: center; color: var(--ink-soft); font-size: .8rem; margin-top: 24px; }
+  @media (max-width: 520px) { .code-display { font-size: 1.6rem; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<dialog id="confirm-end">
+  <h2 style="margin-bottom:10px">End this session?</h2>
+  <p><strong>This will delete session data. Do you want to proceed?</strong></p>
+  <p class="muted" style="margin-top:8px">All student records for this session will be erased from Firebase. There is no undo. Make sure you downloaded the PDF first.</p>
+  <div style="margin-top:18px; text-align:right">
+    <button class="btn secondary" id="end-cancel">Cancel</button>
+    <button class="btn danger" id="end-proceed">Proceed</button>
+  </div>
+</dialog>
+
+<script src="firebase-config.js"></script>
+<script type="module">
+/* ============================================================
+   TEACHER COMMAND CENTER
+   Create a session → share the code → watch the live roster →
+   download the PDF → End Session (deletes everything).
+   ============================================================ */
+
+const app = document.getElementById("app");
+const TRIBE_NAMES = { comanche: "Comanche", karankawa: "Karankawa", jumano: "Jumano", caddo: "Caddo" };
+const STATUS_LABEL = { not_started: "Not started", in_progress: "In progress", completed: "Completed" };
+
+let fb = null;              // { db, fs, uid }
+let session = null;         // { id, code, requireApproval, createdAt }
+let students = [];          // live roster
+let unsubRoster = null;
+
+/* ---------- Firebase ---------- */
+async function fbInit() {
+  if (!FIREBASE_CONFIG || !FIREBASE_CONFIG.apiKey) {
+    throw new Error("Firebase is not set up yet. Open firebase-config.js and paste in your project's config (see README).");
+  }
+  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+  const { getAuth, signInAnonymously } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
+  const fs = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+  const appFb = initializeApp(FIREBASE_CONFIG);
+  const cred = await signInAnonymously(getAuth(appFb));
+  return { db: fs.getFirestore(appFb), fs, uid: cred.user.uid };
+}
+
+async function sha256(text) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function makeCode() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I
+  let s = "";
+  for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return "TX-" + s;
+}
+
+/* ---------- helpers ---------- */
+function el(html) { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; }
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+function show(node) { app.replaceChildren(node); const h = node.querySelector("h1, h2"); if (h) { h.setAttribute("tabindex","-1"); h.focus(); } }
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+
+/* ---------- gate screen (create or resume) ---------- */
+function screenGate(err = "") {
+  const node = el(`<div>
+    <h1>🏕️ Survive the Season — Teacher Command Center</h1>
+    <div class="card">
+      <h2>Start a new class session</h2>
+      <label for="new-pin">Set a 4-digit teacher PIN</label>
+      <input type="password" id="new-pin" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="e.g. 4321">
+      <label class="switch"><input type="checkbox" id="new-approval" checked> Require me to approve student names before they play</label>
+      <button class="btn" id="create-btn">Create Session &amp; Get Class Code</button>
+    </div>
+    <div class="card">
+      <h2>Resume a session I already created</h2>
+      <p class="muted">Works from the same browser you created it in. Sessions auto-delete after 24 hours.</p>
+      <label for="res-code">Class code</label>
+      <input type="text" id="res-code" autocapitalize="characters" maxlength="10" placeholder="TX-????">
+      <label for="res-pin">Teacher PIN</label>
+      <input type="password" id="res-pin" inputmode="numeric" maxlength="4" autocomplete="off">
+      <button class="btn secondary" id="resume-btn">Resume Session</button>
+    </div>
+    <p class="err" role="alert">${esc(err)}</p>
+    <footer>7th Grade Texas History &middot; Survive the Season &middot; TEKS 7.2A, 7.9A</footer>
+  </div>`);
+
+  node.querySelector("#create-btn").addEventListener("click", async () => {
+    const pin = node.querySelector("#new-pin").value.trim();
+    if (!/^\d{4}$/.test(pin)) return setErr("Please enter a 4-digit PIN (numbers only).");
+    busy(node, true);
+    try {
+      if (!fb) fb = await fbInit();
+      const { fs, db, uid } = fb;
+      const code = makeCode();
+      const now = Date.now();
+      const ref = await fs.addDoc(fs.collection(db, "sessions"), {
+        code,
+        pinHash: await sha256(pin),
+        teacherUid: uid,
+        requireApproval: node.querySelector("#new-approval").checked,
+        open: true,
+        createdAt: fs.serverTimestamp(),
+        expiresAt: fs.Timestamp.fromMillis(now + 24 * 60 * 60 * 1000)
+      });
+      session = { id: ref.id, code, requireApproval: node.querySelector("#new-approval").checked };
+      screenDashboard();
+    } catch (e) { busy(node, false); setErr(friendly(e)); }
+  });
+
+  node.querySelector("#resume-btn").addEventListener("click", async () => {
+    const code = node.querySelector("#res-code").value.trim().toUpperCase();
+    const pin = node.querySelector("#res-pin").value.trim();
+    if (!code || !pin) return setErr("Enter both the class code and your PIN.");
+    busy(node, true);
+    try {
+      if (!fb) fb = await fbInit();
+      const { fs, db } = fb;
+      const q = fs.query(fs.collection(db, "sessions"), fs.where("code", "==", code), fs.limit(1));
+      const snap = await fs.getDocs(q);
+      if (snap.empty) throw new Error("no-session");
+      const doc = snap.docs[0];
+      if (doc.data().pinHash !== await sha256(pin)) throw new Error("bad-pin");
+      if (doc.data().teacherUid !== fb.uid) throw new Error("wrong-browser");
+      session = { id: doc.id, code, requireApproval: doc.data().requireApproval };
+      screenDashboard();
+    } catch (e) { busy(node, false); setErr(friendly(e)); }
+  });
+
+  function setErr(msg) { node.querySelector(".err").textContent = msg; }
+  function busy(n, b) { n.querySelectorAll("button").forEach(x => x.disabled = b); }
+  function friendly(e) {
+    if (e.message === "no-session") return "No session found with that code (it may have expired).";
+    if (e.message === "bad-pin") return "That PIN doesn't match.";
+    if (e.message === "wrong-browser") return "For safety, a session can only be resumed from the browser that created it.";
+    return e.message || "Something went wrong. Check your internet and Firebase setup.";
+  }
+  show(node);
+}
+
+/* ---------- dashboard ---------- */
+function screenDashboard() {
+  const node = el(`<div>
+    <div class="row">
+      <h1>🏕️ Command Center</h1>
+      <div><span class="muted">Class code:</span><br><span class="code-display">${esc(session.code)}</span></div>
+    </div>
+    <div class="note">📄 <strong>Download the PDF before you end the session.</strong> Ending it erases the results.</div>
+    <div class="card">
+      <div class="row">
+        <h2>Live Roster</h2>
+        <label class="switch" style="margin:0"><input type="checkbox" id="tgl-approval" ${session.requireApproval ? "checked" : ""}> Require name approval</label>
+      </div>
+      <p class="muted" id="roster-count">Waiting for students to join…</p>
+      <div class="table-wrap"><table aria-label="Student roster">
+        <thead><tr><th>Name</th><th>Tribe</th><th>Status</th><th>Accuracy</th><th>Actions</th></tr></thead>
+        <tbody id="roster"></tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <h2>Class Accuracy by Tribe <span class="muted" style="font-weight:400">(completed runs only)</span></h2>
+      <div class="tribes" id="tribes"></div>
+    </div>
+    <div class="card row">
+      <button class="btn" id="pdf-btn">📄 Download Results (PDF)</button>
+      <button class="btn danger" id="end-btn">End Session (deletes data)</button>
+    </div>
+    <footer>7th Grade Texas History &middot; Survive the Season &middot; TEKS 7.2A, 7.9A</footer>
+  </div>`);
+  show(node);
+  watchRoster(node);
+
+  node.querySelector("#tgl-approval").addEventListener("change", async (e) => {
+    session.requireApproval = e.target.checked;
+    await fb.fs.updateDoc(fb.fs.doc(fb.db, "sessions", session.id), { requireApproval: session.requireApproval });
+  });
+  node.querySelector("#pdf-btn").addEventListener("click", downloadPDF);
+  node.querySelector("#end-btn").addEventListener("click", () => {
+    const dlg = document.getElementById("confirm-end");
+    dlg.showModal();
+    document.getElementById("end-cancel").onclick = () => dlg.close();
+    document.getElementById("end-proceed").onclick = async () => {
+      dlg.close();
+      await endSession();
+    };
+  });
+}
+
+function watchRoster(node) {
+  const { fs, db } = fb;
+  if (unsubRoster) unsubRoster();
+  unsubRoster = fs.onSnapshot(
+    fs.collection(db, "sessions", session.id, "students"),
+    (snap) => {
+      students = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderRoster(node);
+    },
+    (err) => console.error("Roster listener:", err)
+  );
+}
+
+function renderRoster(node) {
+  const body = node.querySelector("#roster");
+  const count = node.querySelector("#roster-count");
+  if (!body) return;
+  count.textContent = students.length === 0
+    ? "Waiting for students to join…"
+    : `${students.length} student${students.length === 1 ? "" : "s"} · ` +
+      `${students.filter(s => s.status === "in_progress").length} in progress · ` +
+      `${students.filter(s => s.status === "completed").length} completed`;
+
+  body.replaceChildren(...students
+    .sort((a, b) => (a.displayName || "").localeCompare(b.displayName || ""))
+    .map(s => {
+      const tr = document.createElement("tr");
+      const badge = s.approved
+        ? `<span class="badge ${s.status}">${STATUS_LABEL[s.status] || s.status}</span>`
+        : `<span class="badge pending">Pending approval</span>`;
+      tr.innerHTML = `
+        <td><strong>${esc(s.displayName)}</strong></td>
+        <td>${s.tribe ? esc(TRIBE_NAMES[s.tribe] || s.tribe) : "—"}</td>
+        <td>${badge}</td>
+        <td>${s.status === "completed" && s.accuracy != null ? s.accuracy + "%" : "—"}</td>
+        <td>
+          ${!s.approved ? `<button class="btn small" data-act="approve">Approve</button>` : ""}
+          <button class="btn small secondary" data-act="rename">Rename</button>
+          <button class="btn small danger" data-act="remove">Remove</button>
+        </td>`;
+      tr.querySelectorAll("button").forEach(b => b.addEventListener("click", () => studentAction(b.dataset.act, s)));
+      return tr;
+    }));
+
+  const tribesBox = node.querySelector("#tribes");
+  tribesBox.replaceChildren(...Object.entries(TRIBE_NAMES).map(([id, name]) => {
+    const done = students.filter(s => s.tribe === id && s.status === "completed" && s.accuracy != null);
+    const avg = done.length ? Math.round(done.reduce((a, s) => a + s.accuracy, 0) / done.length) : null;
+    return el(`<div class="tribe-card"><b>${name}</b><br>
+      <span class="big">${avg == null ? "—" : avg + "%"}</span><br>
+      <span class="muted">${done.length} student${done.length === 1 ? "" : "s"} completed</span></div>`);
+  }));
+}
+
+async function studentAction(act, s) {
+  const { fs, db } = fb;
+  const ref = fs.doc(db, "sessions", session.id, "students", s.id);
+  if (act === "approve") await fs.updateDoc(ref, { approved: true });
+  if (act === "rename") {
+    const name = prompt(`New name for "${s.displayName}":`, s.displayName);
+    if (name && name.trim().length >= 2) await fs.updateDoc(ref, { displayName: name.trim() });
+  }
+  if (act === "remove") {
+    if (confirm(`Remove "${s.displayName}" from this session?`)) await fs.deleteDoc(ref);
+  }
+}
+
+/* ---------- PDF ---------- */
+function downloadPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const date = todayStr();
+
+  doc.setFontSize(18);
+  doc.setTextColor(95, 60, 26);
+  doc.text("Survive the Season — Class Results", 14, 18);
+  doc.setFontSize(11);
+  doc.setTextColor(60);
+  doc.text(`Class code: ${session.code}    Date: ${date}    Students: ${students.length}`, 14, 27);
+
+  doc.autoTable({
+    startY: 34,
+    head: [["Name", "Tribe", "Status", "Accuracy %"]],
+    body: students
+      .slice()
+      .sort((a, b) => (a.displayName || "").localeCompare(b.displayName || ""))
+      .map(s => [
+        s.displayName || "—",
+        s.tribe ? (TRIBE_NAMES[s.tribe] || s.tribe) : "—",
+        s.approved ? (STATUS_LABEL[s.status] || s.status) : "Pending approval",
+        s.status === "completed" && s.accuracy != null ? String(s.accuracy) : "—"
+      ]),
+    headStyles: { fillColor: [140, 90, 43] },
+    styles: { fontSize: 10 }
+  });
+
+  const tribeRows = Object.entries(TRIBE_NAMES).map(([id, name]) => {
+    const done = students.filter(s => s.tribe === id && s.status === "completed" && s.accuracy != null);
+    const avg = done.length ? Math.round(done.reduce((a, s) => a + s.accuracy, 0) / done.length) + "%" : "—";
+    return [name, String(done.length), avg];
+  });
+  doc.autoTable({
+    startY: doc.lastAutoTable.finalY + 10,
+    head: [["Tribe", "# Completed", "Average Accuracy"]],
+    body: tribeRows,
+    headStyles: { fillColor: [140, 90, 43] },
+    styles: { fontSize: 10 }
+  });
+
+  doc.setFontSize(9);
+  doc.setTextColor(120);
+  doc.text("7th Grade Texas History · Survive the Season · TEKS 7.2A, 7.9A", 14, doc.internal.pageSize.getHeight() - 10);
+  doc.save(`survive-the-season_${session.code}_${date}.pdf`);
+}
+
+/* ---------- end session (delete everything) ---------- */
+async function endSession() {
+  const { fs, db } = fb;
+  if (unsubRoster) { unsubRoster(); unsubRoster = null; }
+  try {
+    const snap = await fs.getDocs(fs.collection(db, "sessions", session.id, "students"));
+    await Promise.all(snap.docs.map(d => fs.deleteDoc(d.ref)));
+    await fs.deleteDoc(fs.doc(db, "sessions", session.id));
+  } catch (e) {
+    alert("Some data could not be deleted: " + e.message + "\nTry again, or it will auto-delete within 24 hours.");
+  }
+  session = null;
+  students = [];
+  const node = el(`<div>
+    <h1>🏕️ Session ended</h1>
+    <div class="card center">
+      <p>All session data has been deleted. Nothing is stored long-term.</p>
+      <button class="btn" id="again" style="margin-top:12px">Start a New Session</button>
+    </div>
+    <footer>7th Grade Texas History &middot; Survive the Season &middot; TEKS 7.2A, 7.9A</footer>
+  </div>`);
+  node.querySelector("#again").addEventListener("click", () => screenGate());
+  show(node);
+}
+
+/* ---------- boot ---------- */
+screenGate();
+</script>
+</body>
+</html>
