@@ -6,6 +6,12 @@
       "runtimeExecutable": "node",
       "runtimeArgs": ["server.js"],
       "port": 8123
+    },
+    {
+      "name": "claim-the-land",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["D:/Texas History/Claim the Land Game/server/src/index.js"],
+      "port": 4000
     }
   ]
 }
