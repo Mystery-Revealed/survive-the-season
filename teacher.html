@@ -95,46 +95,62 @@
   </div>
 </dialog>
 
-<script src="firebase-config.js"></script>
 <script type="module">
 /* ============================================================
    TEACHER COMMAND CENTER
    Create a session → share the code → watch the live roster →
    download the PDF → End Session (deletes everything).
+   Talks to the same-origin Socket.io session server (server.js),
+   the same architecture as Chronos Protocol. Sessions live only
+   in server memory — the PDF is the only permanent record.
    ============================================================ */
 
 const app = document.getElementById("app");
 const TRIBE_NAMES = { comanche: "Comanche", karankawa: "Karankawa", jumano: "Jumano", caddo: "Caddo" };
 const STATUS_LABEL = { not_started: "Not started", in_progress: "In progress", completed: "Completed" };
 
-let fb = null;              // { db, fs, uid }
-let session = null;         // { id, code, requireApproval, createdAt }
+let socket = null;
+let session = null;         // { code, pin, requireApproval }
 let students = [];          // live roster
-let unsubRoster = null;
 
-/* ---------- Firebase ---------- */
-async function fbInit() {
-  if (!FIREBASE_CONFIG || !FIREBASE_CONFIG.apiKey) {
-    throw new Error("Firebase is not set up yet. Open firebase-config.js and paste in your project's config (see README).");
+/* ---------- socket ---------- */
+function loadSocketIo() {
+  return new Promise((resolve) => {
+    const s = document.createElement("script");
+    s.src = "/socket.io/socket.io.js";
+    s.onload = () => resolve(true);
+    s.onerror = () => resolve(false);
+    document.head.appendChild(s);
+  });
+}
+
+async function connect() {
+  if (socket) return;
+  if (!window.io) {
+    const ok = await loadSocketIo();
+    if (!ok) throw new Error("This page must be opened through the game server (the Render URL), not a static copy.");
   }
-  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
-  const { getAuth, signInAnonymously } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
-  const fs = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
-  const appFb = initializeApp(FIREBASE_CONFIG);
-  const cred = await signInAnonymously(getAuth(appFb));
-  return { db: fs.getFirestore(appFb), fs, uid: cred.user.uid };
+  socket = window.io();
+  await new Promise((res, rej) => {
+    socket.once("connect", res);
+    socket.once("connect_error", () => rej(new Error("Couldn't reach the session server. Check your internet and try again.")));
+    setTimeout(() => rej(new Error("Couldn't reach the session server. Check your internet and try again.")), 8000);
+  });
+  socket.on("roster", (payload) => {
+    if (!session || payload.code !== session.code) return;
+    students = payload.students;
+    session.requireApproval = payload.requireApproval;
+    renderRoster();
+  });
+  // If the connection blips, quietly re-subscribe to the live roster.
+  socket.io.on("reconnect", () => {
+    if (session) socket.emit("teacher:resume", { code: session.code, pin: session.pin }, () => {});
+  });
 }
 
-async function sha256(text) {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
-}
-
-function makeCode() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I
-  let s = "";
-  for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
-  return "TX-" + s;
+function emitAck(event, payload = {}) {
+  return new Promise((resolve) =>
+    socket.emit(event, { code: session?.code, pin: session?.pin, ...payload }, resolve));
 }
 
 /* ---------- helpers ---------- */
@@ -156,7 +172,7 @@ function screenGate(err = "") {
     </div>
     <div class="card">
       <h2>Resume a session I already created</h2>
-      <p class="muted">Works from the same browser you created it in. Sessions auto-delete after 24 hours.</p>
+      <p class="muted">Works from any device — you just need the class code and your PIN. Sessions auto-delete after 24 hours.</p>
       <label for="res-code">Class code</label>
       <input type="text" id="res-code" autocapitalize="characters" maxlength="10" placeholder="TX-????">
       <label for="res-pin">Teacher PIN</label>
@@ -172,22 +188,14 @@ function screenGate(err = "") {
     if (!/^\d{4}$/.test(pin)) return setErr("Please enter a 4-digit PIN (numbers only).");
     busy(node, true);
     try {
-      if (!fb) fb = await fbInit();
-      const { fs, db, uid } = fb;
-      const code = makeCode();
-      const now = Date.now();
-      const ref = await fs.addDoc(fs.collection(db, "sessions"), {
-        code,
-        pinHash: await sha256(pin),
-        teacherUid: uid,
-        requireApproval: node.querySelector("#new-approval").checked,
-        open: true,
-        createdAt: fs.serverTimestamp(),
-        expiresAt: fs.Timestamp.fromMillis(now + 24 * 60 * 60 * 1000)
-      });
-      session = { id: ref.id, code, requireApproval: node.querySelector("#new-approval").checked };
+      await connect();
+      const reply = await new Promise((r) =>
+        socket.emit("teacher:create", { pin, requireApproval: node.querySelector("#new-approval").checked }, r));
+      if (reply.error) throw new Error(reply.error);
+      session = { code: reply.code, pin, requireApproval: reply.requireApproval };
+      students = reply.students;
       screenDashboard();
-    } catch (e) { busy(node, false); setErr(friendly(e)); }
+    } catch (e) { busy(node, false); setErr(e.message); }
   });
 
   node.querySelector("#resume-btn").addEventListener("click", async () => {
@@ -196,27 +204,17 @@ function screenGate(err = "") {
     if (!code || !pin) return setErr("Enter both the class code and your PIN.");
     busy(node, true);
     try {
-      if (!fb) fb = await fbInit();
-      const { fs, db } = fb;
-      const q = fs.query(fs.collection(db, "sessions"), fs.where("code", "==", code), fs.limit(1));
-      const snap = await fs.getDocs(q);
-      if (snap.empty) throw new Error("no-session");
-      const doc = snap.docs[0];
-      if (doc.data().pinHash !== await sha256(pin)) throw new Error("bad-pin");
-      if (doc.data().teacherUid !== fb.uid) throw new Error("wrong-browser");
-      session = { id: doc.id, code, requireApproval: doc.data().requireApproval };
+      await connect();
+      const reply = await new Promise((r) => socket.emit("teacher:resume", { code, pin }, r));
+      if (reply.error) throw new Error(reply.error);
+      session = { code: reply.code, pin, requireApproval: reply.requireApproval };
+      students = reply.students;
       screenDashboard();
-    } catch (e) { busy(node, false); setErr(friendly(e)); }
+    } catch (e) { busy(node, false); setErr(e.message); }
   });
 
   function setErr(msg) { node.querySelector(".err").textContent = msg; }
   function busy(n, b) { n.querySelectorAll("button").forEach(x => x.disabled = b); }
-  function friendly(e) {
-    if (e.message === "no-session") return "No session found with that code (it may have expired).";
-    if (e.message === "bad-pin") return "That PIN doesn't match.";
-    if (e.message === "wrong-browser") return "For safety, a session can only be resumed from the browser that created it.";
-    return e.message || "Something went wrong. Check your internet and Firebase setup.";
-  }
   show(node);
 }
 
@@ -250,11 +248,11 @@ function screenDashboard() {
     <footer>7th Grade Texas History &middot; Survive the Season &middot; TEKS 7.2A, 7.9A</footer>
   </div>`);
   show(node);
-  watchRoster(node);
+  renderRoster();
 
   node.querySelector("#tgl-approval").addEventListener("change", async (e) => {
     session.requireApproval = e.target.checked;
-    await fb.fs.updateDoc(fb.fs.doc(fb.db, "sessions", session.id), { requireApproval: session.requireApproval });
+    await emitAck("teacher:setApproval", { requireApproval: session.requireApproval });
   });
   node.querySelector("#pdf-btn").addEventListener("click", downloadPDF);
   node.querySelector("#end-btn").addEventListener("click", () => {
@@ -268,23 +266,10 @@ function screenDashboard() {
   });
 }
 
-function watchRoster(node) {
-  const { fs, db } = fb;
-  if (unsubRoster) unsubRoster();
-  unsubRoster = fs.onSnapshot(
-    fs.collection(db, "sessions", session.id, "students"),
-    (snap) => {
-      students = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderRoster(node);
-    },
-    (err) => console.error("Roster listener:", err)
-  );
-}
-
-function renderRoster(node) {
-  const body = node.querySelector("#roster");
-  const count = node.querySelector("#roster-count");
-  if (!body) return;
+function renderRoster() {
+  const body = document.getElementById("roster");
+  const count = document.getElementById("roster-count");
+  if (!body || !count) return;
   count.textContent = students.length === 0
     ? "Waiting for students to join…"
     : `${students.length} student${students.length === 1 ? "" : "s"} · ` +
@@ -298,8 +283,9 @@ function renderRoster(node) {
       const badge = s.approved
         ? `<span class="badge ${s.status}">${STATUS_LABEL[s.status] || s.status}</span>`
         : `<span class="badge pending">Pending approval</span>`;
+      const offline = !s.connected && s.status !== "completed" ? ` <span class="muted">(offline)</span>` : "";
       tr.innerHTML = `
-        <td><strong>${esc(s.displayName)}</strong></td>
+        <td><strong>${esc(s.displayName)}</strong>${offline}</td>
         <td>${s.tribe ? esc(TRIBE_NAMES[s.tribe] || s.tribe) : "—"}</td>
         <td>${badge}</td>
         <td>${s.status === "completed" && s.accuracy != null ? s.accuracy + "%" : "—"}</td>
@@ -312,7 +298,7 @@ function renderRoster(node) {
       return tr;
     }));
 
-  const tribesBox = node.querySelector("#tribes");
+  const tribesBox = document.getElementById("tribes");
   tribesBox.replaceChildren(...Object.entries(TRIBE_NAMES).map(([id, name]) => {
     const done = students.filter(s => s.tribe === id && s.status === "completed" && s.accuracy != null);
     const avg = done.length ? Math.round(done.reduce((a, s) => a + s.accuracy, 0) / done.length) : null;
@@ -323,15 +309,13 @@ function renderRoster(node) {
 }
 
 async function studentAction(act, s) {
-  const { fs, db } = fb;
-  const ref = fs.doc(db, "sessions", session.id, "students", s.id);
-  if (act === "approve") await fs.updateDoc(ref, { approved: true });
+  if (act === "approve") await emitAck("teacher:approve", { studentId: s.studentId });
   if (act === "rename") {
     const name = prompt(`New name for "${s.displayName}":`, s.displayName);
-    if (name && name.trim().length >= 2) await fs.updateDoc(ref, { displayName: name.trim() });
+    if (name && name.trim().length >= 2) await emitAck("teacher:rename", { studentId: s.studentId, name: name.trim() });
   }
   if (act === "remove") {
-    if (confirm(`Remove "${s.displayName}" from this session?`)) await fs.deleteDoc(ref);
+    if (confirm(`Remove "${s.displayName}" from this session?`)) await emitAck("teacher:remove", { studentId: s.studentId });
   }
 }
 
@@ -385,14 +369,9 @@ function downloadPDF() {
 
 /* ---------- end session (delete everything) ---------- */
 async function endSession() {
-  const { fs, db } = fb;
-  if (unsubRoster) { unsubRoster(); unsubRoster = null; }
-  try {
-    const snap = await fs.getDocs(fs.collection(db, "sessions", session.id, "students"));
-    await Promise.all(snap.docs.map(d => fs.deleteDoc(d.ref)));
-    await fs.deleteDoc(fs.doc(db, "sessions", session.id));
-  } catch (e) {
-    alert("Some data could not be deleted: " + e.message + "\nTry again, or it will auto-delete within 24 hours.");
+  const reply = await emitAck("teacher:end");
+  if (reply?.error) {
+    alert("Couldn't end the session: " + reply.error + "\nIt will auto-delete within 24 hours either way.");
   }
   session = null;
   students = [];

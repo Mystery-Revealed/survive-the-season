@@ -172,13 +172,15 @@
 <div id="live-region" class="visually-hidden" role="status" aria-live="polite"></div>
 
 <script src="game-data.js"></script>
-<script src="firebase-config.js"></script>
 <script type="module">
 /* ============================================================
    SURVIVE THE SEASON — game logic
    Content lives in game-data.js. This file never holds text
    students read, except tiny UI labels.
    No localStorage/sessionStorage: all game state is in memory.
+   Class tracking talks to the same-origin Socket.io server
+   (server.js). When no server is present (GitHub Pages, local
+   file), the game silently runs in solo mode.
    ============================================================ */
 
 const app = document.getElementById("app");
@@ -207,67 +209,75 @@ function freshState(people) {
   };
 }
 
-/* ---------- Firebase (classroom mode) ---------- */
-const classroomEnabled = FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey;
-let fb = null;          // { db, uid, sessionId, fns... } once joined
+/* ---------- Classroom mode (Socket.io, same origin) ---------- */
+let net = null;                 // { socket, code, studentId, approved } once joined
 let studentName = "";
+let waitingForApproval = false;
 
-async function fbInit() {
-  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
-  const { getAuth, signInAnonymously } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
-  const fs = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
-  const appFb = initializeApp(FIREBASE_CONFIG);
-  const auth = getAuth(appFb);
-  const cred = await signInAnonymously(auth);
-  return { db: fs.getFirestore(appFb), fs, uid: cred.user.uid };
-}
-
-async function fbJoin(code, name) {
-  if (!fb) fb = await fbInit();
-  const { fs, db, uid } = fb;
-  const q = fs.query(
-    fs.collection(db, "sessions"),
-    fs.where("code", "==", code),
-    fs.where("open", "==", true),
-    fs.limit(1)
-  );
-  const snap = await fs.getDocs(q);
-  if (snap.empty) throw new Error("no-session");
-  const sessionDoc = snap.docs[0];
-  fb.sessionId = sessionDoc.id;
-  fb.requireApproval = !!sessionDoc.data().requireApproval;
-  const ref = fs.doc(db, "sessions", fb.sessionId, "students", uid);
-  await fs.setDoc(ref, {
-    displayName: name,
-    approved: !fb.requireApproval,
-    tribe: null,
-    status: "not_started",
-    decisions: [],
-    pointsEarned: 0,
-    totalDecisions: GAME_DATA.totalDecisions,
-    accuracy: null,
-    startedAt: null,
-    completedAt: null,
-    joinedAt: fs.serverTimestamp()
-  });
-  fb.studentRef = ref;
-}
-
-function fbWatchApproval(onApproved, onRemoved) {
-  const { fs } = fb;
-  fb.unsubApproval = fs.onSnapshot(fb.studentRef, (snap) => {
-    if (!snap.exists()) { onRemoved(); return; }
-    if (snap.data().approved) {
-      if (fb.unsubApproval) { fb.unsubApproval(); fb.unsubApproval = null; }
-      onApproved();
-    }
+// The socket.io client only exists when server.js is serving this page.
+// On GitHub Pages or a plain file server the script 404s → solo mode.
+function loadSocketIo() {
+  return new Promise((resolve) => {
+    const s = document.createElement("script");
+    s.src = "/socket.io/socket.io.js";
+    s.onload = () => resolve(true);
+    s.onerror = () => resolve(false);
+    document.head.appendChild(s);
   });
 }
 
-async function fbReport(fields) {
-  if (!fb || !fb.studentRef) return;
-  try { await fb.fs.updateDoc(fb.studentRef, fields); }
-  catch (e) { console.warn("Save failed (game continues):", e); }
+function emitAck(event, payload) {
+  return new Promise((resolve) => net.socket.emit(event, payload, resolve));
+}
+
+async function netJoin(code, name) {
+  if (!net) {
+    const socket = window.io();
+    await new Promise((res, rej) => {
+      socket.once("connect", res);
+      socket.once("connect_error", rej);
+      setTimeout(rej, 8000);
+    });
+    net = { socket, code: null, studentId: null, approved: false };
+    wireNetEvents(socket);
+  }
+  const reply = await emitAck("student:join", { code, name });
+  if (reply.error) throw new Error(reply.error);
+  net.code = code;
+  net.studentId = reply.studentId;
+  net.approved = reply.approved;
+}
+
+function wireNetEvents(socket) {
+  socket.on("student:approved", () => {
+    net.approved = true;
+    if (waitingForApproval) { waitingForApproval = false; screenTitle(); }
+  });
+  socket.on("student:removed", () => {
+    net.code = net.studentId = null;
+    waitingForApproval = false;
+    screenJoin("Your teacher removed that name. Please pick another one.");
+  });
+  socket.on("session:ended", () => {
+    // Teacher ended the class. If the student is mid-game, let them finish
+    // in solo mode; if they were still waiting to start, send them back.
+    const wasWaiting = waitingForApproval;
+    net.code = net.studentId = null;
+    waitingForApproval = false;
+    if (wasWaiting || !state) screenJoin("Your teacher ended the class session.");
+  });
+  // School wifi hiccup: re-attach to our record so progress keeps saving.
+  socket.io.on("reconnect", async () => {
+    if (!net?.code || !net?.studentId) return;
+    const r = await emitAck("student:rejoin", { code: net.code, studentId: net.studentId });
+    if (r.error) { net.code = net.studentId = null; } // session gone; finish solo
+  });
+}
+
+function netReport(fields) {
+  if (net && net.code && net.studentId && net.socket.connected) {
+    net.socket.emit("student:update", { code: net.code, studentId: net.studentId, ...fields });
+  }
 }
 
 /* ---------- tiny helpers ---------- */
@@ -351,18 +361,19 @@ function screenJoin(err = "") {
     const btn = node.querySelector("#join-btn");
     btn.disabled = true; btn.textContent = "Joining…";
     try {
-      await fbJoin(code, name);
+      await netJoin(code, name);
       studentName = name;
-      if (fb.requireApproval) screenWaiting();
+      if (!net.approved) screenWaiting();
       else screenTitle();
     } catch (e) {
       btn.disabled = false; btn.textContent = "Join Class";
-      showErr(e.message === "no-session"
-        ? "That code didn't match an open class. Check it and try again."
-        : "Couldn't connect. Check your internet and try again.");
+      showErr(e && e.message ? e.message : "Couldn't connect. Check your internet and try again.");
     }
   });
-  node.querySelector("#solo-btn").addEventListener("click", () => { fb = null; screenTitle(); });
+  node.querySelector("#solo-btn").addEventListener("click", () => {
+    if (net) { net.code = net.studentId = null; }
+    screenTitle();
+  });
   function showErr(msg) { node.querySelector(".err").textContent = msg; }
   show(node);
 }
@@ -376,10 +387,7 @@ function screenWaiting() {
     ${footerHTML()}
   </div>`);
   show(node);
-  fbWatchApproval(
-    () => screenTitle(),
-    () => screenJoin("Your teacher removed that name. Please pick another one.")
-  );
+  waitingForApproval = true;
 }
 
 /* ---------- Title / How to play ---------- */
@@ -433,7 +441,7 @@ function screenChoosePeople() {
     btn.addEventListener("click", () => {
       const p = GAME_DATA.peoples.find(x => x.id === btn.dataset.id);
       state = freshState(p);
-      fbReport({ tribe: p.id, status: "in_progress", startedAt: fb ? fb.fs.serverTimestamp() : null });
+      netReport({ tribe: p.id, status: "in_progress" });
       screenPeopleIntro();
     });
   });
@@ -503,7 +511,7 @@ function applyChoice(choice) {
   state.points += pts;
   const s = currentSeason();
   state.decisions.push({ season: s.key, n: state.decisionIndex + 1, verdict: choice.verdict, points: pts });
-  fbReport({ decisions: state.decisions, pointsEarned: state.points });
+  netReport({ decisions: state.decisions, pointsEarned: state.points });
 
   const failed = METER_INFO.find(mi => state.meters[mi.key] <= 0);
   if (failed) state.failedMeter = failed.key;
@@ -579,12 +587,11 @@ function nextSeasonName() {
 function screenEnding(kind) {
   const p = state.people;
   const accuracy = Math.round((state.points / GAME_DATA.totalDecisions) * 100);
-  fbReport({
+  netReport({
     status: "completed",
     accuracy,
     pointsEarned: state.points,
-    decisions: state.decisions,
-    completedAt: fb ? fb.fs.serverTimestamp() : null
+    decisions: state.decisions
   });
 
   let title, text, emoji;
@@ -622,8 +629,10 @@ function screenEnding(kind) {
 }
 
 /* ---------- boot ---------- */
-if (classroomEnabled) screenJoin();
-else screenTitle();
+loadSocketIo().then((hasServer) => {
+  if (hasServer) screenJoin();
+  else screenTitle(); // solo mode: no session server behind this page
+});
 </script>
 </body>
 </html>
