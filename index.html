@@ -5,165 +5,230 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Survive the Season — Texas History Game</title>
 <style>
+  /* Survive the Season — Natural Texas & its first peoples. Shares the Texas
+     History game family's parchment-and-ink design system (same tokens, class
+     names, and components as Trail Boss / Claim the Land / Run the Blockade),
+     with a woodland-bark accent and three season meters. Big tap targets,
+     16px+ text, color is never the only signal (meters read by icon + number). */
+
   :root {
-    --parchment: #f7f0e1;
-    --card: #fffaf0;
-    --ink: #3a2c1e;
-    --ink-soft: #6b5a45;
-    --accent: #8c5a2b;
-    --accent-dark: #5f3c1a;
-    --right: #2e7d32;
-    --partial: #b07d10;
-    --wrong: #b3402e;
-    --food: #c0392b;
-    --shelter: #8c5a2b;
-    --health: #2e7d5a;
-    --radius: 14px;
+    --bg: #ece2cc;
+    --card: #fbf6ea;
+    --ink: #2c261b;
+    --ink-soft: #6a5d47;
+    --line: #d9cbab;
+    --accent: #94582a;        /* woodland bark — brand */
+    --accent-dark: #63380f;
+    --gold: #c68a2e;          /* season sun — focus & tags */
+    --food: #cf8a24;          /* 🍖 harvest amber */
+    --shelter: #4e7d4a;       /* ⛺ brush green */
+    --health: #bf4230;        /* ❤️ barn red */
+    --green: #2e7d32; --green-soft: #e3f0e3;
+    --amber: #b07d10; --amber-soft: #faf0d7;
+    --red: #b3402e; --red-soft: #f7e2dc;
+    --gray: #8a8a8a;
+    --radius: 12px;
   }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { background: var(--parchment); }
+  html, body { height: 100%; }
   body {
-    font-family: Georgia, "Times New Roman", serif;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    background-image: radial-gradient(ellipse at top, #f4ecd6 0%, var(--bg) 62%);
     color: var(--ink);
-    font-size: 17px;
-    line-height: 1.55;
+    font-size: 16px;
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
   }
-  #app {
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 14px 14px 30px;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-  h1, h2, h3 {
-    font-family: Georgia, serif;
-    color: var(--accent-dark);
-    line-height: 1.2;
-  }
-  h1 { font-size: 2.2rem; }
-  h2 { font-size: 1.6rem; }
-  h2:focus, h1:focus { outline: none; }
-  .screen { animation: fadein .35s ease; flex: 1; display: flex; flex-direction: column; }
-  @keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  #app { max-width: 1000px; margin: 0 auto; padding: 16px 14px 40px; min-height: 100%; }
+  h1 { color: var(--accent-dark); font-size: 1.6rem; line-height: 1.2; }
+  h2 { color: var(--accent-dark); font-size: 1.25rem; margin-bottom: 8px; }
+  h3 { color: var(--accent-dark); font-size: 1.05rem; margin: 14px 0 6px; }
+  h1:focus, h2:focus { outline: none; }
+  p { margin: 6px 0; }
 
-  .btn {
-    display: block;
-    width: 100%;
-    font-family: inherit;
-    font-size: 1.05rem;
-    text-align: left;
-    background: var(--card);
-    color: var(--ink);
-    border: 2px solid #d8c9ab;
-    border-radius: var(--radius);
-    padding: 14px 18px;
-    margin: 10px 0;
-    cursor: pointer;
-    transition: border-color .15s, transform .1s, box-shadow .15s;
-  }
-  .btn:hover, .btn:focus-visible { border-color: var(--accent); box-shadow: 0 2px 10px rgba(90,60,20,.15); }
-  .btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-  .btn:active { transform: scale(.99); }
-  .btn-primary {
-    background: var(--accent);
-    color: #fff;
-    text-align: center;
-    font-weight: bold;
-    border-color: var(--accent-dark);
-    font-size: 1.15rem;
-  }
-  .btn-primary:hover, .btn-primary:focus-visible { background: var(--accent-dark); }
-  .btn-quiet { background: none; border: none; color: var(--ink-soft); text-decoration: underline; text-align: center; font-size: .95rem; cursor: pointer; font-family: inherit; }
-
-  .scene {
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    border-radius: var(--radius);
-    overflow: hidden;
-    background: linear-gradient(135deg, #d9c9a6, #b09a72);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #7a6647;
-    font-style: italic;
-    margin-bottom: 16px;
-    position: relative;
-  }
-  .scene img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-  .meters { display: flex; gap: 10px; margin: 14px 0; }
-  .meter { flex: 1; background: var(--card); border: 1.5px solid #d8c9ab; border-radius: 10px; padding: 8px 10px; }
-  .meter-label { font-size: .85rem; font-weight: bold; color: var(--ink-soft); display: flex; justify-content: space-between; }
-  .meter-bar { height: 12px; background: #e7dcc4; border-radius: 6px; margin-top: 5px; overflow: hidden; }
-  .meter-fill { height: 100%; border-radius: 6px; transition: width .6s ease; }
-  .meter-food .meter-fill { background: var(--food); }
-  .meter-shelter .meter-fill { background: var(--shelter); }
-  .meter-health .meter-fill { background: var(--health); }
+  .screen { animation: fadein .3s ease; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
   .card {
-    background: var(--card);
-    border: 1.5px solid #d8c9ab;
-    border-radius: var(--radius);
-    padding: 20px;
-    margin: 12px 0;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 20px; margin: 14px 0;
+    box-shadow: 0 1px 4px rgba(54, 45, 36, 0.1);
   }
-  .verdict { display: inline-block; font-weight: bold; padding: 4px 14px; border-radius: 20px; color: #fff; margin-bottom: 10px; font-size: 1rem; }
-  .verdict.right { background: var(--right); }
-  .verdict.partial { background: var(--partial); }
-  .verdict.wrong { background: var(--wrong); }
-  .delta { font-weight: bold; }
-  .delta.up { color: var(--right); }
-  .delta.down { color: var(--wrong); }
 
-  .people-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-top: 14px; }
+  /* ---------- buttons & inputs ---------- */
+  .btn {
+    font-family: inherit; font-size: 1rem; font-weight: 600;
+    background: var(--accent); color: #fff; border: none; border-radius: 10px;
+    padding: 12px 20px; cursor: pointer; margin: 4px 6px 4px 0; min-height: 44px;
+  }
+  .btn:hover, .btn:focus-visible { background: var(--accent-dark); }
+  .btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn.big { font-size: 1.15rem; padding: 14px 26px; width: 100%; }
+  .btn.secondary { background: #ecdcbe; color: var(--accent-dark); }
+  .btn.secondary:hover { background: #e2cfa8; }
+  .btn.ghost { background: transparent; color: var(--accent-dark); text-decoration: underline; min-height: 40px; }
+  .btn.ghost:hover { background: transparent; color: var(--accent); }
+  .btn-col { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+
+  input[type="text"] {
+    font-family: inherit; font-size: 1.1rem; padding: 12px; width: 100%;
+    border: 1.5px solid #cbba98; border-radius: 10px; margin: 4px 0 14px; background: #fff; color: var(--ink);
+  }
+  input:focus { outline: 3px solid var(--gold); border-color: var(--accent); }
+  label { font-weight: 600; color: var(--ink-soft); font-size: 0.92rem; }
+  .err { color: var(--red); font-weight: 600; min-height: 1.3em; margin: 6px 0; }
+  .muted { color: var(--ink-soft); font-size: 0.92rem; }
+  .lead { font-size: 1.08rem; }
+  .note {
+    background: #fbf1d8; border: 1px solid #e6d29a; border-radius: 10px;
+    padding: 12px 14px; font-size: 0.96rem; margin: 12px 0;
+  }
+  .center { text-align: center; }
+  .app-footer { text-align: center; color: var(--ink-soft); font-size: 0.8rem; margin-top: 26px; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* ---------- art frames (fall back to a gradient if an image is missing) ---------- */
+  .art-frame {
+    width: 100%; border-radius: 10px; border: 1px solid var(--line); overflow: hidden;
+    background:
+      radial-gradient(circle at 22% 30%, rgba(198, 138, 46, 0.4), transparent 55%),
+      radial-gradient(circle at 80% 70%, rgba(148, 88, 42, 0.34), transparent 55%),
+      linear-gradient(165deg, #e7d4a6, #cdb178);
+  }
+  .art-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .hero-art { aspect-ratio: 16 / 7; }
+  .event-art { aspect-ratio: 16 / 9; margin-bottom: 10px; }
+  .result-art { aspect-ratio: 16 / 7; margin-bottom: 12px; }
+  .card-art { aspect-ratio: 16 / 10; border: none; border-radius: 0; }
+
+  /* ---------- title / how / join / wait ---------- */
+  .title-screen, .how-screen, .join-screen, .wait-card, .result-screen { max-width: 660px; margin: 16px auto; }
+  .pick-screen { max-width: 820px; margin: 16px auto; }
+  .game-title { font-size: 2.3rem; letter-spacing: 0.01em; margin-top: 12px; color: var(--accent-dark); }
+  .tagline { font-size: 1.12rem; color: var(--accent); font-weight: 700; margin: 4px 0; }
+  .title-blurb { margin: 10px 0 6px; }
+
+  .how-list { margin: 8px 0 8px 22px; }
+  .how-list li { margin: 6px 0; }
+  .how-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px 0; }
+  .how-card { border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: #fbf1de; }
+  .how-card b { color: var(--accent-dark); }
+  .how-card p { font-size: 0.9rem; color: var(--ink-soft); }
+  .how-icon { font-size: 1.6rem; display: block; margin-bottom: 2px; }
+
+  .wait-card { text-align: center; }
+  .pulse-dot {
+    width: 18px; height: 18px; border-radius: 50%; background: var(--accent);
+    margin: 8px auto 14px; animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { transform: scale(0.8); opacity: 0.5; } 50% { transform: scale(1.15); opacity: 1; } }
+
+  /* ---------- pick your people ---------- */
+  .people-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin: 14px 0; }
   .people-card {
-    background: var(--card); border: 2px solid #d8c9ab; border-radius: var(--radius);
-    cursor: pointer; padding: 0; overflow: hidden; text-align: left; font-family: inherit;
-    transition: border-color .15s, box-shadow .15s;
+    display: flex; flex-direction: column; text-align: left; font-family: inherit; cursor: pointer;
+    border: 2px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink);
+    padding: 0; overflow: hidden; transition: border-color .15s, box-shadow .15s;
   }
-  .people-card:hover, .people-card:focus-visible { border-color: var(--accent); box-shadow: 0 3px 12px rgba(90,60,20,.2); }
-  .people-card:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-  .people-card .scene { aspect-ratio: 16/10; border-radius: 0; margin: 0; }
-  .people-card .pc-body { padding: 12px 14px 14px; }
-  .people-card h3 { font-size: 1.25rem; }
-  .people-card p { font-size: .9rem; color: var(--ink-soft); margin-top: 4px; }
+  .people-card:hover { border-color: var(--accent); box-shadow: 0 3px 12px rgba(90, 60, 20, 0.18); }
+  .people-card:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .people-card:disabled { opacity: 0.6; cursor: wait; }
+  .pc-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 2px; }
+  .people-name { font-size: 1.15rem; color: var(--accent-dark); font-weight: 800; }
+  .people-region { font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-soft); }
+  .people-facts { font-size: 0.9rem; color: var(--ink-soft); margin: 4px 0 0; }
+  .people-go { margin-top: 8px; font-weight: 800; color: var(--accent); }
 
-  .season-tag { display: inline-block; background: var(--accent); color: #fff; font-size: .85rem; font-weight: bold; letter-spacing: .08em; text-transform: uppercase; padding: 4px 14px; border-radius: 20px; margin-bottom: 8px; }
-  .progress-dots { display: flex; gap: 6px; margin: 6px 0 2px; }
-  .progress-dots span { width: 34px; height: 8px; border-radius: 4px; background: #ddceac; }
+  /* ---------- match header (season + progress) ---------- */
+  .match-header { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .season-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #f3e7c8; border: 1px solid var(--gold); color: var(--accent-dark);
+    padding: 5px 14px; border-radius: 999px; font-weight: 700; font-size: 0.95rem;
+    text-transform: capitalize;
+  }
+  .chapter-chip {
+    margin-left: auto; background: #ece0c4; border: 1px solid var(--line);
+    padding: 5px 12px; border-radius: 999px; font-weight: 700; color: var(--accent-dark); font-size: 0.88rem;
+  }
+  .progress-dots { display: flex; gap: 6px; margin: 2px 0 10px; }
+  .progress-dots span { flex: 1; max-width: 46px; height: 8px; border-radius: 4px; background: #ddceac; }
   .progress-dots span.done { background: var(--accent); }
   .progress-dots span.now { background: var(--accent-dark); }
 
-  input[type=text] {
-    width: 100%; font-family: inherit; font-size: 1.1rem; padding: 12px 14px;
-    border: 2px solid #d8c9ab; border-radius: 10px; background: #fff; color: var(--ink); margin: 6px 0 14px;
+  /* ---------- meters ---------- */
+  .meters { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin: 12px 0; }
+  .meters-title { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft); margin-bottom: 4px; }
+  .meter { display: grid; grid-template-columns: 24px 84px 1fr 34px; align-items: center; gap: 8px; margin: 7px 0; }
+  .meter-icon { font-size: 1rem; }
+  .meter-name { font-weight: 700; font-size: 0.92rem; }
+  .meter-track { height: 14px; background: #e7dabd; border-radius: 999px; overflow: hidden; border: 1px solid var(--line); }
+  .meter-track.danger { border-color: var(--red); box-shadow: 0 0 0 1px var(--red); }
+  .meter-fill { height: 100%; border-radius: 999px; transition: width 0.7s ease; }
+  .meter-fill.m-food { background: var(--food); }
+  .meter-fill.m-shelter { background: var(--shelter); }
+  .meter-fill.m-health { background: var(--health); }
+  .meter-value { font-weight: 800; font-size: 0.95rem; text-align: right; }
+
+  /* ---------- event / decision / feedback panel ---------- */
+  .action-panel { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+  .event-kicker { font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); }
+  .event-card h2 { font-size: 1.4rem; margin: 2px 0 10px; }
+  .event-text { font-size: 1.06rem; }
+  .prompt { font-size: 1.12rem; font-weight: 600; margin-top: 4px; }
+
+  .choice-list { display: grid; gap: 10px; margin-top: 12px; }
+  .choice-btn {
+    font-family: inherit; font-size: 1.02rem; text-align: left; cursor: pointer;
+    border: 2px solid var(--line); border-radius: 10px; background: #fbf1de;
+    padding: 13px 15px; color: var(--ink); line-height: 1.45; min-height: 44px;
   }
-  input[type=text]:focus { outline: 3px solid var(--accent); border-color: var(--accent); }
-  label { font-weight: bold; color: var(--ink-soft); font-size: .95rem; }
-  .err { color: var(--wrong); font-weight: bold; margin: 8px 0; min-height: 1.4em; }
+  .choice-btn:hover { border-color: var(--accent); background: #f6ead0; }
+  .choice-btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .choice-btn:disabled { opacity: 0.6; cursor: wait; }
 
-  .ending-title { font-size: 2rem; margin-bottom: 8px; }
-  .debrief li { margin: 8px 0 8px 4px; }
-  .debrief { padding-left: 20px; }
+  .verdict-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 1.1rem; font-weight: 800; padding: 8px 16px; border-radius: 999px; margin-bottom: 10px;
+    border: 2px solid transparent;
+  }
+  .verdict-badge.right { background: var(--green-soft); color: var(--green); border-color: var(--green); }
+  .verdict-badge.partial { background: var(--amber-soft); color: #7c5a0d; border-color: var(--amber); }
+  .verdict-badge.wrong { background: var(--red-soft); color: var(--red); border-color: var(--red); }
+  .feedback-text { font-size: 1.06rem; }
+  .effects-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+  .effect-chip { font-size: 0.9rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; }
+  .effect-chip.up { background: var(--green-soft); color: var(--green); }
+  .effect-chip.down { background: var(--red-soft); color: var(--red); }
 
-  footer { text-align: center; color: var(--ink-soft); font-size: .8rem; margin-top: 26px; }
-  .center { text-align: center; }
-  .mt { margin-top: 16px; }
-  .lead { font-size: 1.1rem; margin: 10px 0; }
-  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  /* ---------- result / ending ---------- */
+  .result-headline { font-size: 1.8rem; margin: 4px 0 12px; }
+  .result-headline.win { color: var(--green); }
+  .result-headline.mid { color: var(--accent); }
+  .result-headline.low { color: var(--ink-soft); }
+  .fall-note { font-size: 1.02rem; color: var(--ink-soft); border-left: 4px solid var(--gold); padding: 4px 0 4px 12px; margin: 10px 0; }
+  .ending-block { border-left: 6px solid var(--accent); background: #fbf1de; border-radius: 8px; padding: 12px 16px; margin: 12px 0; font-size: 1.06rem; }
+  .accuracy-block {
+    display: flex; gap: 16px; align-items: center;
+    background: var(--card); border: 2px solid var(--accent); border-radius: 12px;
+    padding: 14px 18px; margin: 14px 0;
+  }
+  .accuracy-number { font-size: 2.6rem; font-weight: 900; color: var(--accent-dark); line-height: 1; }
+  .debrief-block { background: #ece1c8; border-radius: 10px; padding: 14px 16px; margin: 12px 0; }
+  .debrief { margin: 8px 0 0 20px; }
+  .debrief li { margin: 8px 0; }
+  .replay-nudge { text-align: center; }
 
-  .spinner { width: 40px; height: 40px; border: 4px solid #ddceac; border-top-color: var(--accent); border-radius: 50%; margin: 20px auto; animation: spin 1s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  @media (max-width: 480px) {
-    body { font-size: 16px; }
-    h1 { font-size: 1.7rem; }
-    h2 { font-size: 1.35rem; }
-    .meters { flex-direction: row; gap: 6px; }
-    .meter { padding: 6px; }
-    .meter-label { font-size: .72rem; }
+  /* ---------- responsive ---------- */
+  @media (max-width: 620px) {
+    .how-grid { grid-template-columns: 1fr; }
+    .game-title { font-size: 1.95rem; }
+    .accuracy-number { font-size: 2.1rem; }
+    .chapter-chip { margin-left: 0; }
+    .meter { grid-template-columns: 22px 70px 1fr 30px; }
   }
 </style>
 </head>
@@ -192,7 +257,11 @@ const METER_INFO = [
   { key: "health",  label: "Health",  emoji: "❤️" }
 ];
 const SEASON_EMOJI = { spring: "\u{1F331}", summer: "☀️", fall: "\u{1F342}", winter: "❄️" };
-const VERDICT_LABEL = { right: "✅ Good choice!", partial: "⚠️ Partly right", wrong: "❌ Not your people's way" };
+const VERDICT_UI = {
+  right:   { cls: "right",   icon: "✓", label: "Good choice!" },
+  partial: { cls: "partial", icon: "≈", label: "Partly right" },
+  wrong:   { cls: "wrong",   icon: "✗", label: "Not your people's way" }
+};
 const VERDICT_POINTS = { right: 1, partial: 0.5, wrong: 0 };
 
 /* ---------- state (memory only) ---------- */
@@ -299,27 +368,49 @@ function show(node, focusSel) {
 function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
 }
-function sceneHTML(src, alt) {
-  if (!src) return `<div class="scene">Scene image coming soon</div>`;
-  return `<div class="scene"><img src="${esc(src)}" alt="${esc(alt || "")}"
-      onerror="this.parentElement.textContent='Scene image coming soon'"></div>`;
+function artHTML(src, alt, frameCls) {
+  // A framed image; if the file is missing the frame's gradient shows through.
+  if (!src) return `<div class="art-frame ${frameCls}"></div>`;
+  return `<div class="art-frame ${frameCls}"><img src="${esc(src)}" alt="${esc(alt || "")}"
+      onerror="this.style.display='none'"></div>`;
 }
-function metersHTML(m) {
-  return `<div class="meters" role="group" aria-label="Your resource meters">` +
-    METER_INFO.map(mi => `
-      <div class="meter meter-${mi.key}">
-        <div class="meter-label"><span>${mi.emoji} ${mi.label}</span><span>${m[mi.key]}</span></div>
-        <div class="meter-bar" role="img" aria-label="${mi.label}: ${m[mi.key]} out of 100">
-          <div class="meter-fill" style="width:${m[mi.key]}%"></div>
+function metersHTML(m, title) {
+  const rows = METER_INFO.map(mi => {
+    const v = m[mi.key];
+    const danger = v <= 15 ? " danger" : "";
+    return `<div class="meter">
+        <span class="meter-icon" aria-hidden="true">${mi.emoji}</span>
+        <span class="meter-name">${mi.label}</span>
+        <div class="meter-track${danger}" role="meter" aria-valuenow="${v}" aria-valuemin="0" aria-valuemax="100" aria-label="${mi.label}: ${v} of 100">
+          <div class="meter-fill m-${mi.key}" style="width:${v}%"></div>
         </div>
-      </div>`).join("") + `</div>`;
+        <span class="meter-value">${v}</span>
+      </div>`;
+  }).join("");
+  return `<div class="meters" role="group" aria-label="Your resources">${title ? `<div class="meters-title">${esc(title)}</div>` : ""}${rows}</div>`;
+}
+function effectsRowHTML(before, after) {
+  const chips = METER_INFO.map(mi => {
+    const diff = after[mi.key] - before[mi.key];
+    if (diff === 0) return "";
+    const cls = diff > 0 ? "up" : "down";
+    const sign = diff > 0 ? "+" : "";
+    return `<span class="effect-chip ${cls}">${mi.emoji} ${mi.label} ${sign}${diff}</span>`;
+  }).filter(Boolean).join("");
+  return chips ? `<div class="effects-row">${chips}</div>` : "";
+}
+function headerHTML(s) {
+  return `<div class="match-header">
+      <span class="season-chip">${SEASON_EMOJI[s.key]} ${esc(s.key)}</span>
+      <span class="chapter-chip">Season ${state.seasonIndex + 1} of 4</span>
+    </div>` + dotsHTML(state.seasonIndex);
 }
 function dotsHTML(seasonIndex) {
   return `<div class="progress-dots" aria-label="Season ${seasonIndex + 1} of 4">` +
     [0,1,2,3].map(i => `<span class="${i < seasonIndex ? "done" : i === seasonIndex ? "now" : ""}"></span>`).join("") + `</div>`;
 }
 function footerHTML() {
-  return `<footer>Made for 7th Grade Texas History &middot; TEKS 7.2A, 7.9A</footer>`;
+  return `<footer class="app-footer">Made for 7th Grade Texas History &middot; TEKS 7.2A, 7.9A</footer>`;
 }
 function shuffle(arr) {
   const a = arr.slice();
@@ -342,17 +433,22 @@ function nameLooksOk(n) {
 /* ---------- Join (classroom mode) ---------- */
 function screenJoin(err = "") {
   const node = el(`<div class="screen">
-    ${sceneHTML("assets/images/title_hero.jpg", "Early Texas at dawn: tall prairie grass, distant hills, golden light.")}
-    <h1>Survive the Season</h1>
-    <p class="lead">Join your class to play.</p>
-    <div class="card">
+    <div class="card title-screen">
+      ${artHTML("assets/images/title_hero.jpg", "Early Texas at dawn: tall prairie grass, distant hills, golden light.", "hero-art")}
+      <h1 class="game-title">Survive the Season</h1>
+      <p class="tagline">Live a whole year the way Texas's first peoples really did.</p>
+    </div>
+    <div class="card join-screen">
+      <h2>Join your class</h2>
       <label for="join-code">Class code (from your teacher)</label>
       <input type="text" id="join-code" autocomplete="off" autocapitalize="characters" maxlength="10" placeholder="TX-????">
       <label for="join-name">Pick the name your teacher will see</label>
       <input type="text" id="join-name" autocomplete="off" maxlength="24" placeholder="First name + last initial">
       <p class="err" role="alert">${esc(err)}</p>
-      <button class="btn btn-primary" id="join-btn">Join Class</button>
-      <button class="btn-quiet" id="solo-btn" style="width:100%;margin-top:8px;">Practice without a class code</button>
+      <div class="btn-col">
+        <button class="btn big" id="join-btn">Join Class</button>
+        <button class="btn ghost" id="solo-btn">Practice without a class code</button>
+      </div>
     </div>
     ${footerHTML()}
   </div>`);
@@ -379,15 +475,17 @@ function screenJoin(err = "") {
     screenTitle();
   });
   function showErr(msg) { node.querySelector(".err").textContent = msg; }
-  show(node);
+  show(node, ".game-title");
 }
 
 function screenWaiting() {
-  const node = el(`<div class="screen center">
-    <h2 class="mt">Hi, ${esc(studentName)}!</h2>
-    <div class="spinner" aria-hidden="true"></div>
-    <p class="lead">Waiting for your teacher to approve your name&hellip;</p>
-    <p style="color:var(--ink-soft)">The game will start by itself when your teacher says OK.</p>
+  const node = el(`<div class="screen">
+    <div class="card wait-card">
+      <div class="pulse-dot" aria-hidden="true"></div>
+      <h2>Hi, ${esc(studentName)}!</h2>
+      <p class="lead">Waiting for your teacher to approve your name&hellip;</p>
+      <p class="muted">The game will start by itself when your teacher says OK.</p>
+    </div>
     ${footerHTML()}
   </div>`);
   show(node);
@@ -397,26 +495,39 @@ function screenWaiting() {
 /* ---------- Title / How to play ---------- */
 function screenTitle() {
   const node = el(`<div class="screen">
-    ${sceneHTML("assets/images/title_hero.jpg", "Early Texas at dawn: tall prairie grass, distant hills, golden light.")}
-    <h1>Survive the Season</h1>
-    <p class="lead">Texas, long ago &mdash; before Europeans arrived. Four peoples live in four very different lands. Can you live a whole year the way they really did?</p>
-    <button class="btn btn-primary mt" id="start">Start</button>
+    <div class="card title-screen">
+      ${artHTML("assets/images/title_hero.jpg", "Early Texas at dawn: tall prairie grass, distant hills, golden light.", "hero-art")}
+      <h1 class="game-title">Survive the Season</h1>
+      <p class="tagline">Four peoples. Four wild lands. One whole year.</p>
+      <p class="title-blurb">Texas, long ago &mdash; before Europeans arrived. Four peoples live in four very different lands. Can you live a whole year the way they really did?</p>
+      <div class="btn-col">
+        <button class="btn big" id="start">Start</button>
+      </div>
+    </div>
     ${footerHTML()}
   </div>`);
   node.querySelector("#start").addEventListener("click", screenHowTo);
-  show(node);
+  show(node, ".game-title");
 }
 
 function screenHowTo() {
   const node = el(`<div class="screen">
-    <h2>How to Play</h2>
-    <div class="card">
-      <p><strong>1.</strong> Pick one of the four early Texas peoples.</p>
-      <p class="mt"><strong>2.</strong> Live through four seasons: Spring, Summer, Fall, and Winter. Each season brings two big choices.</p>
-      <p class="mt"><strong>3.</strong> Watch your three meters: ${METER_INFO.map(m => `${m.emoji} <strong>${m.label}</strong>`).join(" &middot; ")}. They start at 60. If any meter hits 0, the year ends early.</p>
-      <p class="mt"><strong>4.</strong> Here's the secret: the <em>right</em> choice depends on <em>your people's land</em>. What saves one people can sink another!</p>
+    <div class="card how-screen">
+      <h2>How to Play</h2>
+      <ol class="how-list">
+        <li><b>Pick one of the four early Texas peoples.</b></li>
+        <li><b>Live through four seasons</b> — Spring, Summer, Fall, and Winter. Each season brings <b>two big choices</b>.</li>
+      </ol>
+      <h3>Watch your three meters</h3>
+      <div class="how-grid">
+        <div class="how-card"><span class="how-icon" aria-hidden="true">\u{1F356}</span><b>Food</b><p>Enough to eat through the year.</p></div>
+        <div class="how-card"><span class="how-icon" aria-hidden="true">⛺</span><b>Shelter</b><p>A home that fits your land.</p></div>
+        <div class="how-card"><span class="how-icon" aria-hidden="true">❤️</span><b>Health</b><p>Your people, safe and strong.</p></div>
+      </div>
+      <p class="muted">They start at ${GAME_DATA.meterStart}. If any meter hits 0, the year ends early.</p>
+      <div class="note"><b>Here's the secret:</b> the <i>right</i> choice depends on <i>your people's land</i>. What saves one people can sink another!</div>
+      <div class="btn-col"><button class="btn big" id="go">Choose Your People</button></div>
     </div>
-    <button class="btn btn-primary" id="go">Choose Your People</button>
     ${footerHTML()}
   </div>`);
   node.querySelector("#go").addEventListener("click", screenChoosePeople);
@@ -427,18 +538,20 @@ function screenHowTo() {
 function screenChoosePeople() {
   const cards = GAME_DATA.peoples.map(p => `
     <button class="people-card" data-id="${p.id}">
-      ${sceneHTML(p.cardImage, `${p.name} people in their home region: ${p.region}.`)}
+      ${artHTML(p.cardImage, `${p.name} people in their home region: ${p.region}.`, "card-art")}
       <div class="pc-body">
-        <h3>${esc(p.name)}</h3>
-        <p><strong>Region:</strong> ${esc(p.region)}<br>
-           <strong>Home:</strong> ${esc(p.home)}<br>
-           <strong>Main food:</strong> ${esc(p.food)}</p>
+        <span class="people-name">${esc(p.name)}</span>
+        <span class="people-region">${esc(p.region)}</span>
+        <p class="people-facts"><b>Home:</b> ${esc(p.home)} &middot; <b>Main food:</b> ${esc(p.food)}</p>
+        <span class="people-go">Live as the ${esc(p.name)} →</span>
       </div>
     </button>`).join("");
   const node = el(`<div class="screen">
-    <h2>Choose Your People</h2>
-    <p>Each people lived in a different part of Texas. Their land shaped everything they did.</p>
-    <div class="people-grid">${cards}</div>
+    <div class="pick-screen">
+      <h2>Choose Your People</h2>
+      <p class="muted">Each people lived in a different part of Texas. Their land shaped everything they did.</p>
+      <div class="people-grid">${cards}</div>
+    </div>
     ${footerHTML()}
   </div>`);
   node.querySelectorAll(".people-card").forEach(btn => {
@@ -455,11 +568,14 @@ function screenChoosePeople() {
 function screenPeopleIntro() {
   const p = state.people;
   const node = el(`<div class="screen">
-    ${sceneHTML(p.cardImage, `${p.name} people in their home region: ${p.region}.`)}
-    <h2>The ${esc(p.name)}</h2>
-    <div class="card"><p class="lead">${esc(p.intro)}</p></div>
-    ${metersHTML(state.meters)}
-    <button class="btn btn-primary" id="go">Begin the Year</button>
+    <div class="action-panel event-card">
+      <div class="event-kicker">Your people</div>
+      <h2>The ${esc(p.name)}</h2>
+      ${artHTML(p.cardImage, `${p.name} people in their home region: ${p.region}.`, "event-art")}
+      <p class="event-text">${esc(p.intro)}</p>
+    </div>
+    ${metersHTML(state.meters, "Your resources — start of the year")}
+    <div class="btn-col"><button class="btn big" id="go">Begin the Year</button></div>
     ${footerHTML()}
   </div>`);
   node.querySelector("#go").addEventListener("click", screenSeasonIntro);
@@ -472,13 +588,15 @@ function currentSeason() { return state.people.seasons[state.seasonIndex]; }
 function screenSeasonIntro() {
   const s = currentSeason();
   const node = el(`<div class="screen">
-    ${dotsHTML(state.seasonIndex)}
-    <span class="season-tag">${SEASON_EMOJI[s.key]} ${esc(s.key)}</span>
-    <h2>${esc(s.title)}</h2>
-    ${sceneHTML(s.image, s.alt)}
-    <div class="card"><p class="lead">${esc(s.intro)}</p></div>
+    ${headerHTML(s)}
+    <div class="action-panel event-card">
+      <div class="event-kicker">${SEASON_EMOJI[s.key]} ${esc(s.key)}</div>
+      <h2>${esc(s.title)}</h2>
+      ${artHTML(s.image, s.alt, "event-art")}
+      <p class="event-text">${esc(s.intro)}</p>
+    </div>
     ${metersHTML(state.meters)}
-    <button class="btn btn-primary" id="go">Continue</button>
+    <div class="btn-col"><button class="btn big" id="go">Continue</button></div>
     ${footerHTML()}
   </div>`);
   node.querySelector("#go").addEventListener("click", screenDecision);
@@ -490,16 +608,18 @@ function screenDecision() {
   const d = s.decisions[state.decisionIndex];
   const options = shuffle(d.choices.map((c, i) => ({ c, i })));
   const node = el(`<div class="screen">
-    ${dotsHTML(state.seasonIndex)}
-    <span class="season-tag">${SEASON_EMOJI[s.key]} ${esc(s.key)} &middot; Choice ${state.decisionIndex + 1} of 2</span>
-    <h2>${esc(d.prompt)}</h2>
+    ${headerHTML(s)}
     ${metersHTML(state.meters)}
-    <div id="choices"></div>
+    <div class="action-panel">
+      <div class="event-kicker">${SEASON_EMOJI[s.key]} ${esc(s.key)} &middot; Choice ${state.decisionIndex + 1} of 2</div>
+      <p class="prompt">${esc(d.prompt)}</p>
+      <div class="choice-list" id="choices"></div>
+    </div>
     ${footerHTML()}
   </div>`);
   const box = node.querySelector("#choices");
   options.forEach(({ c }) => {
-    const b = el(`<button class="btn">${esc(c.text)}</button>`);
+    const b = el(`<button class="choice-btn">${esc(c.text)}</button>`);
     b.addEventListener("click", () => applyChoice(c));
     box.appendChild(b);
   });
@@ -520,29 +640,22 @@ function applyChoice(choice) {
   const failed = METER_INFO.find(mi => state.meters[mi.key] <= 0);
   if (failed) state.failedMeter = failed.key;
 
-  const deltas = METER_INFO
-    .filter(mi => state.meters[mi.key] !== before[mi.key] || choice.effects[mi.key])
-    .map(mi => {
-      const diff = state.meters[mi.key] - before[mi.key];
-      const cls = diff >= 0 ? "up" : "down";
-      const sign = diff > 0 ? "+" : "";
-      return `<span class="delta ${cls}">${mi.emoji} ${mi.label} ${sign}${diff}</span>`;
-    }).join(" &nbsp; ");
   live.textContent = METER_INFO.map(mi => `${mi.label} is now ${state.meters[mi.key]}`).join(", ");
-  screenFeedback(choice, deltas);
+  screenFeedback(choice, before);
 }
 
-function screenFeedback(choice, deltas) {
+function screenFeedback(choice, before) {
+  const v = VERDICT_UI[choice.verdict];
   const nextLabel = state.failedMeter ? "See what happened"
     : state.decisionIndex === 0 ? "Next choice" : "Finish the season";
   const node = el(`<div class="screen">
-    <div class="card">
-      <span class="verdict ${choice.verdict}">${VERDICT_LABEL[choice.verdict]}</span>
-      <p style="margin:6px 0 10px">${deltas || "No meter change."}</p>
-      <p class="lead">${esc(choice.feedback)}</p>
+    <div class="action-panel">
+      <div class="verdict-badge ${v.cls}"><span aria-hidden="true">${v.icon}</span> ${v.label}</div>
+      <p class="feedback-text">${esc(choice.feedback)}</p>
+      ${effectsRowHTML(before, state.meters) || `<p class="muted">No meter change.</p>`}
     </div>
     ${metersHTML(state.meters)}
-    <button class="btn btn-primary" id="go">${nextLabel}</button>
+    <div class="btn-col"><button class="btn big" id="go">${nextLabel}</button></div>
     ${footerHTML()}
   </div>`);
   node.querySelector("#go").addEventListener("click", () => {
@@ -550,7 +663,7 @@ function screenFeedback(choice, deltas) {
     if (state.decisionIndex === 0) { state.decisionIndex = 1; screenDecision(); }
     else screenSeasonSummary();
   });
-  show(node, ".verdict");
+  show(node, ".verdict-badge");
 }
 
 function screenSeasonSummary() {
@@ -562,12 +675,14 @@ function screenSeasonSummary() {
     : "It's getting hard. Your next choices really matter.";
   const isWinter = state.seasonIndex === 3;
   const node = el(`<div class="screen">
-    ${dotsHTML(state.seasonIndex)}
-    <span class="season-tag">${SEASON_EMOJI[s.key]} ${esc(s.key)} complete</span>
-    <h2>End of ${esc(s.key.charAt(0).toUpperCase() + s.key.slice(1))}</h2>
+    ${headerHTML(s)}
+    <div class="action-panel">
+      <div class="event-kicker">${SEASON_EMOJI[s.key]} ${esc(s.key)} complete</div>
+      <h2>End of ${esc(s.key.charAt(0).toUpperCase() + s.key.slice(1))}</h2>
+      <p class="event-text">${line}</p>
+    </div>
     ${metersHTML(state.meters)}
-    <div class="card"><p class="lead">${line}</p></div>
-    <button class="btn btn-primary" id="go">${isWinter ? "See how your year ends" : "On to " + nextSeasonName()}</button>
+    <div class="btn-col"><button class="btn big" id="go">${isWinter ? "See how your year ends" : "On to " + nextSeasonName()}</button></div>
     ${footerHTML()}
   </div>`);
   node.querySelector("#go").addEventListener("click", () => {
@@ -598,30 +713,42 @@ function screenEnding(kind) {
     decisions: state.decisions
   });
 
-  let title, text, emoji;
-  if (kind === "thrived") { title = GAME_DATA.endings.thrived.title; text = GAME_DATA.endings.thrived.text; emoji = "\u{1F31F}"; }
-  else if (kind === "survived") { title = GAME_DATA.endings.survived.title; text = GAME_DATA.endings.survived.text; emoji = "\u{1F332}"; }
+  let title, text, tier;
+  if (kind === "thrived") { title = GAME_DATA.endings.thrived.title; text = GAME_DATA.endings.thrived.text; tier = "win"; }
+  else if (kind === "survived") { title = GAME_DATA.endings.survived.title; text = GAME_DATA.endings.survived.text; tier = "mid"; }
   else {
     const mi = METER_INFO.find(m => m.key === state.failedMeter);
     title = "The Year Was Too Hard";
     text = `Your ${mi.label.toLowerCase()} ${mi.emoji} ran out. ` + GAME_DATA.endings.failed[state.failedMeter];
-    emoji = "\u{1F327}️";
+    tier = "low";
   }
   const debrief = p.debrief.map(li => `<li>${esc(li)}</li>`).join("");
   const node = el(`<div class="screen">
-    <p class="center" style="font-size:3rem" aria-hidden="true">${emoji}</p>
-    <h2 class="ending-title center">${esc(title)}</h2>
-    <div class="card"><p class="lead">${esc(text)}</p>
-      <p class="mt"><strong>Your choices matched the ${esc(p.name)} way of life ${accuracy}% of the time.</strong></p>
-    </div>
-    ${metersHTML(state.meters)}
-    <div class="card">
-      <h3>How the ${esc(p.name)} really survived the seasons</h3>
-      <ul class="debrief mt">${debrief}</ul>
-    </div>
-    <div class="card center" style="border-color:var(--accent)">
-      <p class="lead"><strong>${esc(GAME_DATA.endings.replayNudge)}</strong></p>
-      <button class="btn btn-primary" id="replay">Play Again &mdash; Choose Another People</button>
+    <div class="card result-screen">
+      <div class="event-kicker">The ${esc(p.name)} &middot; end of the year</div>
+      <h1 class="result-headline ${tier}">${esc(title)}</h1>
+      ${artHTML(currentSeason().image, `${p.name} people at the end of the year.`, "result-art")}
+      <div class="ending-block"><p>${esc(text)}</p></div>
+
+      <div class="accuracy-block">
+        <div class="accuracy-number">${accuracy}%</div>
+        <div>
+          <b>How well your choices matched the ${esc(p.name)} way of life.</b>
+          <p class="muted">This is the score your teacher sees — how often you chose what really fit your people's land.</p>
+        </div>
+      </div>
+
+      ${metersHTML(state.meters, "Where your year ended")}
+
+      <div class="debrief-block">
+        <h3>How the ${esc(p.name)} really survived the seasons</h3>
+        <ul class="debrief">${debrief}</ul>
+      </div>
+
+      <div class="btn-col">
+        <button class="btn big" id="replay">Play Again — Choose Another People</button>
+        <p class="replay-nudge muted">${esc(GAME_DATA.endings.replayNudge)}</p>
+      </div>
     </div>
     ${footerHTML()}
   </div>`);
@@ -629,7 +756,7 @@ function screenEnding(kind) {
     state = null;
     screenChoosePeople();
   });
-  show(node);
+  show(node, ".result-headline");
 }
 
 /* ---------- boot ---------- */
