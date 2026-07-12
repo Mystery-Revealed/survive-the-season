@@ -12,6 +12,12 @@
       "runtimeExecutable": "node",
       "runtimeArgs": ["D:/Texas History/Claim the Land Game/server/src/index.js"],
       "port": 4000
+    },
+    {
+      "name": "president-republic",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["D:/Texas History/President of the Republic Game/server/src/index.js"],
+      "port": 4000
     }
   ]
 }
