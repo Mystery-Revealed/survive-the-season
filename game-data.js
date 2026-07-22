@@ -56,14 +56,14 @@ const GAME_DATA = {
             {
               prompt: "Scouts spot a herd two days' ride away.",
               choices: [
-                { text: "Stay here and plant corn by the creek.",
-                  effects: { food: -15, health: -5 },
-                  verdict: "wrong",
-                  feedback: "Planting was the way of the Jumano and Caddo in other regions. The Plains Comanche did not farm. The camp goes hungry waiting for crops that won't come." },
                 { text: "Pack the teepees and follow the herd on horseback.",
                   effects: { food: 15, health: 5 },
                   verdict: "right",
                   feedback: "Yes. The Comanche were always on the move. Teepees pack up fast, and horses let you follow the buffalo — your main source of food, tools, and shelter." },
+                { text: "Stay here and plant corn by the creek.",
+                  effects: { food: -15, health: -5 },
+                  verdict: "wrong",
+                  feedback: "Planting was the way of the Jumano and Caddo in other regions. The Plains Comanche did not farm. The camp goes hungry waiting for crops that won't come." },
                 { text: "Send a few hunters on foot; keep camp here.",
                   effects: { food: 5, health: -5 },
                   verdict: "partial",
@@ -103,27 +103,27 @@ const GAME_DATA = {
                   effects: { food: -15 },
                   verdict: "wrong",
                   feedback: "The buffalo don't come to you. Waiting means empty stomachs." },
-                { text: "Split the band — half follow, half stay.",
-                  effects: { food: 5, health: -5 },
-                  verdict: "partial",
-                  feedback: "A split band is harder to protect, and half your people still go hungry." },
                 { text: "Move the whole band north on horseback.",
                   effects: { food: 15 },
                   verdict: "right",
-                  feedback: "Staying close to the herd kept your people fed. Moving fast was everything." }
+                  feedback: "Staying close to the herd kept your people fed. Moving fast was everything." },
+                { text: "Split the band — half follow, half stay.",
+                  effects: { food: 5, health: -5 },
+                  verdict: "partial",
+                  feedback: "A split band is harder to protect, and half your people still go hungry." }
               ]
             },
             {
               prompt: "A rival band claims the same hunting ground.",
               choices: [
-                { text: "Give up the ground and move away.",
-                  effects: { food: -10 },
-                  verdict: "wrong",
-                  feedback: "Losing the best hunting ground means losing food." },
                 { text: "Defend the ground with your horse-mounted warriors.",
                   effects: { health: 10 },
                   verdict: "right",
                   feedback: "The Comanche were powerful riders and among the strongest warriors of the plains." },
+                { text: "Give up the ground and move away.",
+                  effects: { food: -10 },
+                  verdict: "wrong",
+                  feedback: "Losing the best hunting ground means losing food." },
                 { text: "Build a wooden fort and dig in.",
                   effects: { shelter: -10 },
                   verdict: "wrong",
@@ -189,14 +189,14 @@ const GAME_DATA = {
                   effects: { health: -15 },
                   verdict: "wrong",
                   feedback: "The open plain in winter is deadly. There is nothing to block the wind." },
-                { text: "Move to a sheltered valley or canyon, out of the wind.",
-                  effects: { shelter: 10, health: 5 },
-                  verdict: "right",
-                  feedback: "Comanche often wintered in protected valleys where the wind couldn't reach." },
                 { text: "Travel to the coast to fish.",
                   effects: { food: -10, health: -10 },
                   verdict: "wrong",
-                  feedback: "Fishing the coast was the Karankawa's way. The long trip in winter is dangerous and far from home." }
+                  feedback: "Fishing the coast was the Karankawa's way. The long trip in winter is dangerous and far from home." },
+                { text: "Move to a sheltered valley or canyon, out of the wind.",
+                  effects: { shelter: 10, health: 5 },
+                  verdict: "right",
+                  feedback: "Comanche often wintered in protected valleys where the wind couldn't reach." }
               ]
             },
             {
@@ -206,14 +206,14 @@ const GAME_DATA = {
                   effects: { food: -15 },
                   verdict: "wrong",
                   feedback: "Nothing grows in the frozen plains, and your people were never farmers." },
-                { text: "Trade a horse away for food.",
-                  effects: { food: 5, health: -5 },
-                  verdict: "partial",
-                  feedback: "You eat today, but horses were your people's greatest strength. Each one traded away makes the band weaker." },
                 { text: "Live on stored pemmican and hunt small game on horseback.",
                   effects: { food: 10 },
                   verdict: "right",
-                  feedback: "Your fall preparation pays off. Stored food carries you through." }
+                  feedback: "Your fall preparation pays off. Stored food carries you through." },
+                { text: "Trade a horse away for food.",
+                  effects: { food: 5, health: -5 },
+                  verdict: "partial",
+                  feedback: "You eat today, but horses were your people's greatest strength. Each one traded away makes the band weaker." }
               ]
             }
           ]
@@ -253,27 +253,27 @@ const GAME_DATA = {
                   effects: { food: -15 },
                   verdict: "wrong",
                   feedback: "Farming was the way of the Jumano and Caddo in other regions. The Karankawa moved too often to farm — and the sandy coast is poor ground for corn." },
-                { text: "Stay at the winter camp and gather berries nearby.",
-                  effects: { food: 5, health: -5 },
-                  verdict: "partial",
-                  feedback: "Berries help, but the real food is in the bays. A people who follow the food must move when the food moves." },
                 { text: "Load the dugout canoes and move camp to the bay to fish.",
                   effects: { food: 15, health: 5 },
                   verdict: "right",
-                  feedback: "Yes. The Karankawa followed the food along the coast. Dugout canoes let you fish the shallow bays where the catch was best." }
+                  feedback: "Yes. The Karankawa followed the food along the coast. Dugout canoes let you fish the shallow bays where the catch was best." },
+                { text: "Stay at the winter camp and gather berries nearby.",
+                  effects: { food: 5, health: -5 },
+                  verdict: "partial",
+                  feedback: "Berries help, but the real food is in the bays. A people who follow the food must move when the food moves." }
               ]
             },
             {
               prompt: "Your group is moving to a new camp by the water.",
               choices: [
-                { text: "Spend weeks building a house of adobe — clay and straw bricks.",
-                  effects: { shelter: -15 },
-                  verdict: "wrong",
-                  feedback: "Adobe was the Jumano's way in the dry mountains. You will move again soon — a heavy house would be left behind." },
                 { text: "Take down the wigwam poles and mats and carry them along.",
                   effects: { shelter: 15 },
                   verdict: "right",
                   feedback: "The wigwam was made to travel. Bent poles and woven mats go up fast at every new camp." },
+                { text: "Spend weeks building a house of adobe — clay and straw bricks.",
+                  effects: { shelter: -15 },
+                  verdict: "wrong",
+                  feedback: "Adobe was the Jumano's way in the dry mountains. You will move again soon — a heavy house would be left behind." },
                 { text: "Don't bother with shelter. Sleep in the open by the fire.",
                   effects: { shelter: -10, health: -5 },
                   verdict: "wrong",
@@ -296,14 +296,14 @@ const GAME_DATA = {
                   effects: { food: -15, health: -5 },
                   verdict: "wrong",
                   feedback: "Following buffalo was the Comanche's way, with horses, on the plains. On foot, far from your canoes and your coast, your people would struggle." },
-                { text: "Paddle the canoes out to fish and gather oysters and turtles.",
-                  effects: { food: 15 },
-                  verdict: "right",
-                  feedback: "The bay was your people's table. Fish, shellfish, and turtles kept the Karankawa strong all summer." },
                 { text: "Set fish traps but stay on shore in the shade.",
                   effects: { food: 5 },
                   verdict: "partial",
-                  feedback: "Traps catch some fish. But the best food — oysters, turtles, deep-water fish — needs the canoes." }
+                  feedback: "Traps catch some fish. But the best food — oysters, turtles, deep-water fish — needs the canoes." },
+                { text: "Paddle the canoes out to fish and gather oysters and turtles.",
+                  effects: { food: 15 },
+                  verdict: "right",
+                  feedback: "The bay was your people's table. Fish, shellfish, and turtles kept the Karankawa strong all summer." }
               ]
             },
             {
@@ -313,14 +313,14 @@ const GAME_DATA = {
                   effects: { health: -15 },
                   verdict: "wrong",
                   feedback: "On the marshy coast, insect bites brought real sickness. Your people learned long ago to protect their skin." },
-                { text: "Move the whole camp far from the water.",
-                  effects: { health: 5, food: -5 },
-                  verdict: "partial",
-                  feedback: "Fewer bugs, but now you are far from the fish. The coast people found ways to live with the marsh, not run from it." },
                 { text: "Rub on alligator and fish oil, the old coast trick to keep bugs away.",
                   effects: { health: 10 },
                   verdict: "right",
-                  feedback: "It worked! The Karankawa really did coat their skin with oils to keep biting insects off. Fewer bites meant less sickness." }
+                  feedback: "It worked! The Karankawa really did coat their skin with oils to keep biting insects off. Fewer bites meant less sickness." },
+                { text: "Move the whole camp far from the water.",
+                  effects: { health: 5, food: -5 },
+                  verdict: "partial",
+                  feedback: "Fewer bugs, but now you are far from the fish. The coast people found ways to live with the marsh, not run from it." }
               ]
             }
           ]
@@ -335,14 +335,14 @@ const GAME_DATA = {
             {
               prompt: "How will your group prepare food for the cold months?",
               choices: [
-                { text: "Harvest your corn fields.",
-                  effects: { food: -15 },
-                  verdict: "wrong",
-                  feedback: "There are no corn fields. Your people never planted any — farming belonged to the settled peoples like the Caddo and Jumano." },
                 { text: "Gather roots, nuts, and berries, and dry fish to store.",
                   effects: { food: 15 },
                   verdict: "right",
                   feedback: "The Karankawa gathered what each season gave. Dried fish and stored plants would feed the group when the bays grew cold." },
+                { text: "Harvest your corn fields.",
+                  effects: { food: -15 },
+                  verdict: "wrong",
+                  feedback: "There are no corn fields. Your people never planted any — farming belonged to the settled peoples like the Caddo and Jumano." },
                 { text: "Keep fishing every day and store nothing.",
                   effects: { food: 5, health: -5 },
                   verdict: "partial",
@@ -378,6 +378,10 @@ const GAME_DATA = {
             {
               prompt: "The north wind is here. Where does the group camp?",
               choices: [
+                { text: "Set up the wigwams at a sheltered inland camp, out of the wind.",
+                  effects: { shelter: 10, health: 5 },
+                  verdict: "right",
+                  feedback: "Your wigwams go up fast in the protected camp. Moving with the seasons is how the coast people stayed safe." },
                 { text: "Camp out on the open beach to watch for fish.",
                   effects: { health: -15 },
                   verdict: "wrong",
@@ -385,11 +389,7 @@ const GAME_DATA = {
                 { text: "Walk to the far plains to find buffalo.",
                   effects: { food: -10, health: -10 },
                   verdict: "wrong",
-                  feedback: "That was the Comanche's world, and they had horses. A long winter walk away from your coast leaves your people weak and lost." },
-                { text: "Set up the wigwams at a sheltered inland camp, out of the wind.",
-                  effects: { shelter: 10, health: 5 },
-                  verdict: "right",
-                  feedback: "Your wigwams go up fast in the protected camp. Moving with the seasons is how the coast people stayed safe." }
+                  feedback: "That was the Comanche's world, and they had horses. A long winter walk away from your coast leaves your people weak and lost." }
               ]
             },
             {
@@ -399,14 +399,14 @@ const GAME_DATA = {
                   effects: { food: -15 },
                   verdict: "wrong",
                   feedback: "Nothing grows in winter, and your people were never farmers. The coast fed you — you never needed fields." },
-                { text: "Live on stored food, hunt small game, and gather shellfish on mild days.",
-                  effects: { food: 10 },
-                  verdict: "right",
-                  feedback: "Your fall gathering pays off. With stored food plus a little hunting, the group makes it through." },
                 { text: "Eat as little as possible and wait for spring.",
                   effects: { food: -5, health: -5 },
                   verdict: "partial",
-                  feedback: "Going hungry weakens the group. Your people kept working for food all winter — gathering, hunting, and using what they stored." }
+                  feedback: "Going hungry weakens the group. Your people kept working for food all winter — gathering, hunting, and using what they stored." },
+                { text: "Live on stored food, hunt small game, and gather shellfish on mild days.",
+                  effects: { food: 10 },
+                  verdict: "right",
+                  feedback: "Your fall gathering pays off. With stored food plus a little hunting, the group makes it through." }
               ]
             }
           ]
@@ -446,14 +446,14 @@ const GAME_DATA = {
                   effects: { food: -15, shelter: -5 },
                   verdict: "wrong",
                   feedback: "Following the herds was the Comanche's way on the plains. Your people stay. Your fields, your home, and your trade are all here." },
-                { text: "Plant corn, beans, and squash in the fields by the river.",
-                  effects: { food: 15 },
-                  verdict: "right",
-                  feedback: "Yes. The river made farming possible in the dry country. Corn, beans, and squash were the Jumano's life." },
                 { text: "Plant only a small patch and plan to trade for the rest.",
                   effects: { food: 5 },
                   verdict: "partial",
-                  feedback: "Trade was a Jumano strength — but trade works best when you have plenty to offer. A small crop is a thin plan." }
+                  feedback: "Trade was a Jumano strength — but trade works best when you have plenty to offer. A small crop is a thin plan." },
+                { text: "Plant corn, beans, and squash in the fields by the river.",
+                  effects: { food: 15 },
+                  verdict: "right",
+                  feedback: "Yes. The river made farming possible in the dry country. Corn, beans, and squash were the Jumano's life." }
               ]
             },
             {
@@ -463,14 +463,14 @@ const GAME_DATA = {
                   effects: { shelter: -15 },
                   verdict: "wrong",
                   feedback: "Teepees were the moving home of the Comanche. Your people stay by the river — and a strong pueblo beats a tent in the desert heat and cold." },
-                { text: "Skip the repairs and spend every day in the fields.",
-                  effects: { shelter: -5, food: 5 },
-                  verdict: "partial",
-                  feedback: "The crops get help, but cracked walls only get worse. In the desert, your thick walls are your shield from heat and cold." },
                 { text: "Repair the adobe walls with fresh clay and straw.",
                   effects: { shelter: 15 },
                   verdict: "right",
-                  feedback: "Adobe homes lasted for generations — when they were cared for. Each spring, your people renewed the walls." }
+                  feedback: "Adobe homes lasted for generations — when they were cared for. Each spring, your people renewed the walls." },
+                { text: "Skip the repairs and spend every day in the fields.",
+                  effects: { shelter: -5, food: 5 },
+                  verdict: "partial",
+                  feedback: "The crops get help, but cracked walls only get worse. In the desert, your thick walls are your shield from heat and cold." }
               ]
             }
           ]
@@ -485,14 +485,14 @@ const GAME_DATA = {
             {
               prompt: "The summer heat is drying out the fields.",
               choices: [
-                { text: "Leave the village to wander and hunt for the summer.",
-                  effects: { food: -15 },
-                  verdict: "wrong",
-                  feedback: "With no one to water them, the crops die in the heat. Settled farmers cannot walk away from their fields." },
                 { text: "Carry river water to the crops and tend them every day.",
                   effects: { food: 15 },
                   verdict: "right",
                   feedback: "In the dry country, water is life. Your people kept the fields alive with river water through the hottest months." },
+                { text: "Leave the village to wander and hunt for the summer.",
+                  effects: { food: -15 },
+                  verdict: "wrong",
+                  feedback: "With no one to water them, the crops die in the heat. Settled farmers cannot walk away from their fields." },
                 { text: "Water the fields only when clouds don't come.",
                   effects: { food: 5 },
                   verdict: "partial",
@@ -532,27 +532,27 @@ const GAME_DATA = {
                   effects: { food: -15 },
                   verdict: "wrong",
                   feedback: "Crops left standing are lost to birds, beasts, and frost. A farmer's wealth is the food in the storeroom." },
-                { text: "Harvest fast and leave the smallest ears behind.",
-                  effects: { food: 5 },
-                  verdict: "partial",
-                  feedback: "Most of the crop is in, but waste is risk in the dry country. Careful hands harvested everything." },
                 { text: "Harvest the crops and store them in the pueblo's storage rooms.",
                   effects: { food: 15 },
                   verdict: "right",
-                  feedback: "This is why your people farmed. A full storage room meant a safe winter — a promise the desert could not break." }
+                  feedback: "This is why your people farmed. A full storage room meant a safe winter — a promise the desert could not break." },
+                { text: "Harvest fast and leave the smallest ears behind.",
+                  effects: { food: 5 },
+                  verdict: "partial",
+                  feedback: "Most of the crop is in, but waste is risk in the dry country. Careful hands harvested everything." }
               ]
             },
             {
               prompt: "The nights grow cold in the high desert.",
               choices: [
-                { text: "Weave grass mats to cover the walls.",
-                  effects: { shelter: -10 },
-                  verdict: "wrong",
-                  feedback: "Grass walls belonged to the Caddo in the wet forests. Your adobe is far stronger here — it just needs care, not grass." },
                 { text: "Dry beans and squash, seal the storerooms, and mend the roof.",
                   effects: { shelter: 10, health: 5 },
                   verdict: "right",
                   feedback: "Dried food keeps for months, and a tight pueblo keeps the cold out. Your village is ready." },
+                { text: "Weave grass mats to cover the walls.",
+                  effects: { shelter: -10 },
+                  verdict: "wrong",
+                  feedback: "Grass walls belonged to the Caddo in the wet forests. Your adobe is far stronger here — it just needs care, not grass." },
                 { text: "Trade away extra food for shells and feathers.",
                   effects: { food: -5, health: 5 },
                   verdict: "partial",
@@ -575,14 +575,14 @@ const GAME_DATA = {
                   effects: { health: -15 },
                   verdict: "wrong",
                   feedback: "Winter travel in the mountains is dangerous. Your people traded in better seasons and kept close to home in the cold." },
-                { text: "Build a quick brush shelter near the hunting grounds.",
-                  effects: { shelter: -15 },
-                  verdict: "wrong",
-                  feedback: "A quick shelter in a desert winter is a poor trade for adobe walls. Moving out was never the Jumano way." },
                 { text: "Stay in the warm, thick-walled pueblo.",
                   effects: { shelter: 10, health: 5 },
                   verdict: "right",
-                  feedback: "Adobe walls hold heat like a blanket. This is the reward of a settled life — a strong home that never moves." }
+                  feedback: "Adobe walls hold heat like a blanket. This is the reward of a settled life — a strong home that never moves." },
+                { text: "Build a quick brush shelter near the hunting grounds.",
+                  effects: { shelter: -15 },
+                  verdict: "wrong",
+                  feedback: "A quick shelter in a desert winter is a poor trade for adobe walls. Moving out was never the Jumano way." }
               ]
             },
             {
@@ -592,14 +592,14 @@ const GAME_DATA = {
                   effects: { food: -10, health: -10 },
                   verdict: "wrong",
                   feedback: "The coast was the Karankawa's home, far away. Your food is already here, stored safe in the pueblo." },
-                { text: "Live on stored corn, beans, and squash, plus goods from trade.",
-                  effects: { food: 10 },
-                  verdict: "right",
-                  feedback: "The harvest carries you through. Farming and trading meant your people rarely feared winter." },
                 { text: "Send hunters into the winter mountains.",
                   effects: { food: 5, health: -5 },
                   verdict: "partial",
-                  feedback: "A little fresh meat helps, but winter hunts are risky. Your stored crops were always the safer meal." }
+                  feedback: "A little fresh meat helps, but winter hunts are risky. Your stored crops were always the safer meal." },
+                { text: "Live on stored corn, beans, and squash, plus goods from trade.",
+                  effects: { food: 10 },
+                  verdict: "right",
+                  feedback: "The harvest carries you through. Farming and trading meant your people rarely feared winter." }
               ]
             }
           ]
@@ -639,14 +639,14 @@ const GAME_DATA = {
                   effects: { food: -15, shelter: -5 },
                   verdict: "wrong",
                   feedback: "Chasing herds was the Comanche's way on the far plains. Your people stay. Your fields, your village, and your kin are all here." },
-                { text: "Plant a small garden and count on hunting for the rest.",
-                  effects: { food: 5 },
-                  verdict: "partial",
-                  feedback: "Caddo hunters were skilled — but farming fed the village. A small garden cannot feed a large settled people." },
                 { text: "Clear the fields and plant corn, beans, squash, and pumpkins.",
                   effects: { food: 15 },
                   verdict: "right",
-                  feedback: "Yes. The Caddo were expert farmers. The rich forest soil grew big harvests that fed large, organized villages." }
+                  feedback: "Yes. The Caddo were expert farmers. The rich forest soil grew big harvests that fed large, organized villages." },
+                { text: "Plant a small garden and count on hunting for the rest.",
+                  effects: { food: 5 },
+                  verdict: "partial",
+                  feedback: "Caddo hunters were skilled — but farming fed the village. A small garden cannot feed a large settled people." }
               ]
             },
             {
@@ -678,14 +678,14 @@ const GAME_DATA = {
             {
               prompt: "The crops are growing, but the village must stay fed all summer.",
               choices: [
-                { text: "Leave the village and wander for the summer.",
-                  effects: { food: -15 },
-                  verdict: "wrong",
-                  feedback: "Weeds and animals take an untended field fast. A settled farming people cannot abandon their crops." },
                 { text: "Tend the crops, and hunt deer in the woods.",
                   effects: { food: 15 },
                   verdict: "right",
                   feedback: "The Caddo did both — farmed the fields and hunted the forest. Two food sources made the village strong." },
+                { text: "Leave the village and wander for the summer.",
+                  effects: { food: -15 },
+                  verdict: "wrong",
+                  feedback: "Weeds and animals take an untended field fast. A settled farming people cannot abandon their crops." },
                 { text: "Stop farming and only hunt.",
                   effects: { food: 5, health: -5 },
                   verdict: "partial",
@@ -721,6 +721,10 @@ const GAME_DATA = {
             {
               prompt: "The great harvest is ready.",
               choices: [
+                { text: "Bring in the whole harvest and store the extra food.",
+                  effects: { food: 15 },
+                  verdict: "right",
+                  feedback: "Stored surplus — extra food — is what made Caddo society strong. Full storehouses meant no hungry winters." },
                 { text: "Hold one giant feast and eat everything now.",
                   effects: { food: -15 },
                   verdict: "wrong",
@@ -728,11 +732,7 @@ const GAME_DATA = {
                 { text: "Store a little and trade the rest away quickly.",
                   effects: { food: 5 },
                   verdict: "partial",
-                  feedback: "Trade is good, but food comes first. The Caddo traded from their extra, never from what winter would need." },
-                { text: "Bring in the whole harvest and store the extra food.",
-                  effects: { food: 15 },
-                  verdict: "right",
-                  feedback: "Stored surplus — extra food — is what made Caddo society strong. Full storehouses meant no hungry winters." }
+                  feedback: "Trade is good, but food comes first. The Caddo traded from their extra, never from what winter would need." }
               ]
             },
             {
@@ -742,14 +742,14 @@ const GAME_DATA = {
                   effects: { health: -5 },
                   verdict: "partial",
                   feedback: "Families alone are weaker than a village together. Caddo strength came from organization and community." },
-                { text: "Hold a community gathering to share the work and give thanks.",
-                  effects: { health: 10, food: 5 },
-                  verdict: "right",
-                  feedback: "The Caddo were an organized society. Gatherings kept the village united — and shared work filled the storehouses faster." },
                 { text: "Send everyone west on a long buffalo hunt.",
                   effects: { food: -5, health: -10 },
                   verdict: "wrong",
-                  feedback: "The far plains were Comanche country. Your food is already here — in the fields, the forest, and the storehouses." }
+                  feedback: "The far plains were Comanche country. Your food is already here — in the fields, the forest, and the storehouses." },
+                { text: "Hold a community gathering to share the work and give thanks.",
+                  effects: { health: 10, food: 5 },
+                  verdict: "right",
+                  feedback: "The Caddo were an organized society. Gatherings kept the village united — and shared work filled the storehouses faster." }
               ]
             }
           ]
@@ -764,14 +764,14 @@ const GAME_DATA = {
             {
               prompt: "The cold has settled over the forest.",
               choices: [
-                { text: "Migrate south to escape the winter.",
-                  effects: { shelter: -10, health: -5 },
-                  verdict: "wrong",
-                  feedback: "Your people do not migrate. Leaving means abandoning homes, storehouses, and fields — everything your village built." },
                 { text: "Stay in the warm grass-house village.",
                   effects: { shelter: 10, health: 5 },
                   verdict: "right",
                   feedback: "The thick woven walls keep the warmth in. A settled people's reward is a strong home in the cold." },
+                { text: "Migrate south to escape the winter.",
+                  effects: { shelter: -10, health: -5 },
+                  verdict: "wrong",
+                  feedback: "Your people do not migrate. Leaving means abandoning homes, storehouses, and fields — everything your village built." },
                 { text: "Camp in portable hide shelters near the hunting grounds.",
                   effects: { shelter: -15 },
                   verdict: "wrong",
@@ -785,14 +785,14 @@ const GAME_DATA = {
                   effects: { food: -10, health: -10 },
                   verdict: "wrong",
                   feedback: "Fishing the bays was the Karankawa's way of life. Your food is closer: the storehouse and the winter woods." },
-                { text: "Eat as little as possible and wait for spring.",
-                  effects: { food: -5, health: -5 },
-                  verdict: "partial",
-                  feedback: "No need to go hungry — your people planned for this. Winter was for eating stored food, hunting, and craft work." },
                 { text: "Live on stored corn, and hunt deer and turkey in the woods.",
                   effects: { food: 10 },
                   verdict: "right",
-                  feedback: "Storehouses plus forest hunting — the Caddo's two food sources carry the village through winter with ease." }
+                  feedback: "Storehouses plus forest hunting — the Caddo's two food sources carry the village through winter with ease." },
+                { text: "Eat as little as possible and wait for spring.",
+                  effects: { food: -5, health: -5 },
+                  verdict: "partial",
+                  feedback: "No need to go hungry — your people planned for this. Winter was for eating stored food, hunting, and craft work." }
               ]
             }
           ]
